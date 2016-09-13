@@ -84,13 +84,15 @@ EE.Camera.prototype.toWorldPoint = function(point) {
     this._camera = new EE.Camera(this, 0, 0, 1);
     this._renderer = new EE.GraphicRenderer(this);
     this._keyboardController = new EE.KeyboardController(this);
+    this._lastFrameUpdate = new Date();
+    this._deltaTime = 0;
 }
 
 EE.Game.prototype._tryCall = function(callable) {
-        if(typeof callable === "function") {
-            (callable.bind(this))();
-        }
+    if(typeof callable === "function") {
+        (callable.bind(this))();
     }
+}
 
 EE.Game.prototype._init = function() {
     this._canvas.addEventListener("mousedown", this._onClick.bind(this));
@@ -129,17 +131,21 @@ EE.Game.prototype._loadTextures = function(callback) {
 }
 
 EE.Game.prototype._update = function() {
+    var now = new Date();
+    this._deltaTime = (now - this._lastFrameUpdate) / 1000;
+    this._lastFrameUpdate = now;
+
     this._tryCall(this._scene.preUpdate);
     this._quadtree.clear();
     for(var i = 0; i < this._entities.length; i++) {
         this._quadtree.insert(this._entities[i]);
-        this._tryCall(this._entities[i].update);
+        this._entities[i].update(this._deltaTime);
     }
     for(var i = 0; i < this._renderables.length; i++) {
         this._quadtree.insert(this._renderables[i]);
     }
     for(var i = 0; i < this._updatables.length; i++) {
-        this._updatables[i].update();
+        this._updatables[i].update(this._deltaTime);
     }
     this._tryCall(this._scene.update);
 }
@@ -259,7 +265,6 @@ EE.Game.prototype.isDown = function(keyCode) {
     this.bounds = bounds;
     this.objects = [];
     this.nodes = [];
-
 }
 
 EE.Quadtree.prototype.clear = function() {
@@ -418,7 +423,7 @@ EE.Sprite.prototype.render = function() {
     this.game._renderer.drawImage(texture, transformed.x, transformed.y, transformed.width, transformed.height);
 }
 
-EE.Sprite.prototype.update = function() {
+EE.Sprite.prototype.update = function(dt) {
     for(var i = 0; i < this._colliders.length; i++) {
         if(this.intersects(this._colliders[i].candidate)) {         
             if(!this._colliders[i].hit) {
@@ -720,6 +725,10 @@ EE.KeyboardController.prototype.pressed = function(keyCode) {
 EE.Box.prototype.render = function() {
     var transformed = this.game._camera.toScreen(this.bounds);
     this.game._renderer.drawRectangle(transformed.x, transformed.y, transformed.width, transformed.height, this.color);
+}
+
+EE.Box.prototype.update = function(dt) {
+    return;
 }
 
 EE.Box.prototype.setColor = function(color) {

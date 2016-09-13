@@ -19,7 +19,7 @@ EE.Sprite.prototype.render = function() {
     this.game._renderer.drawImage(texture, transformed.x, transformed.y, transformed.width, transformed.height);
 }
 
-EE.Sprite.prototype.update = function() {
+EE.Sprite.prototype.update = function(dt) {
     for(var i = 0; i < this._colliders.length; i++) {
         if(this.intersects(this._colliders[i].candidate)) {         
             if(!this._colliders[i].hit) {

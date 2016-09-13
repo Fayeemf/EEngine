@@ -20,13 +20,15 @@ EE.Game = function(canvas, obj) {
     this._camera = new EE.Camera(this, 0, 0, 1);
     this._renderer = new EE.GraphicRenderer(this);
     this._keyboardController = new EE.KeyboardController(this);
+    this._lastFrameUpdate = new Date();
+    this._deltaTime = 0;
 }
 
 EE.Game.prototype._tryCall = function(callable) {
-        if(typeof callable === "function") {
-            (callable.bind(this))();
-        }
+    if(typeof callable === "function") {
+        (callable.bind(this))();
     }
+}
 
 EE.Game.prototype._init = function() {
     this._canvas.addEventListener("mousedown", this._onClick.bind(this));
@@ -65,17 +67,21 @@ EE.Game.prototype._loadTextures = function(callback) {
 }
 
 EE.Game.prototype._update = function() {
+    var now = new Date();
+    this._deltaTime = (now - this._lastFrameUpdate) / 1000;
+    this._lastFrameUpdate = now;
+
     this._tryCall(this._scene.preUpdate);
     this._quadtree.clear();
     for(var i = 0; i < this._entities.length; i++) {
         this._quadtree.insert(this._entities[i]);
-        this._tryCall(this._entities[i].update);
+        this._entities[i].update(this._deltaTime);
     }
     for(var i = 0; i < this._renderables.length; i++) {
         this._quadtree.insert(this._renderables[i]);
     }
     for(var i = 0; i < this._updatables.length; i++) {
-        this._updatables[i].update();
+        this._updatables[i].update(this._deltaTime);
     }
     this._tryCall(this._scene.update);
 }

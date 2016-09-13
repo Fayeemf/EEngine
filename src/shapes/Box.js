@@ -9,6 +9,10 @@ EE.Box.prototype.render = function() {
     this.game._renderer.drawRectangle(transformed.x, transformed.y, transformed.width, transformed.height, this.color);
 }
 
+EE.Box.prototype.update = function(dt) {
+    return;
+}
+
 EE.Box.prototype.setColor = function(color) {
     // TODO : Input validation for color
     this.color = color;

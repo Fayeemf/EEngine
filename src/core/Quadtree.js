@@ -6,7 +6,6 @@ EE.Quadtree = function(game, level, bounds, max_objects, max_levels) {
     this.bounds = bounds;
     this.objects = [];
     this.nodes = [];
-
 }
 
 EE.Quadtree.prototype.clear = function() {
