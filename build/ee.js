@@ -9,11 +9,28 @@ var EE = {
     this.vWidth = this.game.clientWidth * this.scale;
     this.vHeight = this.game.clientHeight * this.scale;
     this.followed = null;
+
+    this._followPath = [];
 }
 
 EE.Camera.prototype.update = function() {
     if(this.followed) {
         this.centerObject(this.followed);
+    }
+
+    if(this._followPath.length !== 0) {
+        var path = this._followPath[0];
+        var to = path.to;
+        var callback = path.callback;
+
+        var newPos = EE.Vector2.lerp({x: this.x, y: this.y}, to, 0.1);
+        this.moveTo(newPos);
+        if(Math.abs(this.x - to.x) <= 0.1 && Math.abs(this.y - to.y) <= 0.1) {
+            if(typeof callback != "undefined") {
+                callback();
+            }
+            this._followPath.splice(0, 1);
+        }
     }
 }
 
@@ -44,6 +61,18 @@ EE.Camera.prototype.moveOffset = function(offset) {
 EE.Camera.prototype.moveTo = function(newPos) {
     this.x = newPos.x;
     this.y = newPos.y;
+}
+
+EE.Camera.prototype.addPath = function(path) {
+    this._followPath = this._followPath.concat(path);
+}
+
+EE.Camera.prototype.setPath = function(path) {
+    this._followPath = path;
+}
+
+EE.Camera.prototype.lerpTo = function(newPos, callback) {
+    this._followPath = [{to: newPos, callback:callback}];
 }
 
 EE.Camera.prototype.toScreen = function(source) {
@@ -191,9 +220,9 @@ EE.Game.prototype.run = function() {
     });
 }
 
-EE.Game.prototype.loadTexture = function(texture) {
+EE.Game.prototype.loadTexture = function(id, src) {
     // TODO : check if the sprite hasnt been already added
-    this._textures_load_stack.push(texture);
+    this._textures_load_stack.push(new EE.Texture(id, src));
 }
 
 EE.Game.prototype.addEntity = function(entity) {
@@ -376,6 +405,15 @@ EE.Quadtree.prototype.retrieve = function(rect) {
     this.y = y;
     this.width = width;
     this.height = height;
+};EE.Vector2 = function(x, y) {
+    this.x = x;
+    this.y = y;
+}
+
+EE.Vector2.lerp = function(a, b, amt) {
+    var nx = a.x+(b.x-a.x)*amt;
+    var ny = a.y+(b.y-a.y)*amt;
+    return {x:nx,  y:ny};
 };EE.GraphicRenderer = function(game) {
     this.game = game;
     this.default_stroke_color = "black";
@@ -453,7 +491,7 @@ EE.Sprite.prototype.collide = function(other, callback) {
 
 EE.Sprite.prototype.click = function(callback) {
     this.game._addClickListener((event) => {
-        if(this.contains({"x": event.offsetX, "y": event.offsetY}) && this.clickable){
+        if(this.contains(this.game.getCamera().toWorldPoint({x: event.offsetX, y: event.offsetY})) && this.clickable){
             callback();
         }
     });
@@ -734,6 +772,20 @@ EE.Box.prototype.update = function(dt) {
 EE.Box.prototype.setColor = function(color) {
     // TODO : Input validation for color
     this.color = color;
+};EE.TiledMap = function(game, src, scale) {
+    this.game = game;
+    this.src = src;
+    this.scale = scale;
+
+    this.init();
+}
+
+EE.TiledMap.prototype.init = function() {
+    
+}
+
+EE.TiledMap.prototype._onFileRead = function(content) {
+    
 };EE.Guid = function() {
 }
 

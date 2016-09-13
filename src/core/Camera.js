@@ -7,11 +7,28 @@ EE.Camera = function(game, x, y, scale) {
     this.vWidth = this.game.clientWidth * this.scale;
     this.vHeight = this.game.clientHeight * this.scale;
     this.followed = null;
+
+    this._followPath = [];
 }
 
 EE.Camera.prototype.update = function() {
     if(this.followed) {
         this.centerObject(this.followed);
+    }
+
+    if(this._followPath.length !== 0) {
+        var path = this._followPath[0];
+        var to = path.to;
+        var callback = path.callback;
+
+        var newPos = EE.Vector2.lerp({x: this.x, y: this.y}, to, 0.1);
+        this.moveTo(newPos);
+        if(Math.abs(this.x - to.x) <= 0.1 && Math.abs(this.y - to.y) <= 0.1) {
+            if(typeof callback != "undefined") {
+                callback();
+            }
+            this._followPath.splice(0, 1);
+        }
     }
 }
 
@@ -42,6 +59,18 @@ EE.Camera.prototype.moveOffset = function(offset) {
 EE.Camera.prototype.moveTo = function(newPos) {
     this.x = newPos.x;
     this.y = newPos.y;
+}
+
+EE.Camera.prototype.addPath = function(path) {
+    this._followPath = this._followPath.concat(path);
+}
+
+EE.Camera.prototype.setPath = function(path) {
+    this._followPath = path;
+}
+
+EE.Camera.prototype.lerpTo = function(newPos, callback) {
+    this._followPath = [{to: newPos, callback:callback}];
 }
 
 EE.Camera.prototype.toScreen = function(source) {

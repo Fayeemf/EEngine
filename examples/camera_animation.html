@@ -1,0 +1,43 @@
+<html>
+    <head>
+        <title>Camera Animation</title>
+    </head>
+    <body>
+        <canvas id="canvas" width="600" height="600"></canvas>
+    </body> 
+</html>
+<script src="../build/ee.js"></script>
+<script>
+
+var game = new EE.Game(document.getElementById("canvas"), {init: init, update: update, render: render});
+var spr;
+
+function init() {
+    game.loadTexture("bunny", "http://orig13.deviantart.net/e5bc/f/2013/264/7/f/kawaii_bunny_png_by_snsdmiho22-d6n5vse.png");
+    game.setBackground("lightGray");
+    
+    spr = game.addSprite("bunny", game.clientWidth / 2 - 35, game.clientHeight / 2 - 35, 70, 70);
+    spr.click(() => {
+        console.log("clicked");
+        game.getCamera().lerpTo({x: 50, y:60}, () => {
+            console.log("first lerp done");
+            game.getCamera().addPath([
+                {to: {x: 100, y: 60}},
+                {to: {x: 100, y: 200}},
+                {to:{x: 10, y: -10}},
+                {to:{x: 0, y: 0}, callback: () => {console.log("end of path")}},                
+            ])
+        });
+    });
+}
+
+function render() {
+
+}
+
+function update() {
+    game.getCamera().moveOffset({x: 0, y: 0});
+}
+
+game.run();
+</script>

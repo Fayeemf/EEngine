@@ -127,9 +127,9 @@ EE.Game.prototype.run = function() {
     });
 }
 
-EE.Game.prototype.loadTexture = function(texture) {
+EE.Game.prototype.loadTexture = function(id, src) {
     // TODO : check if the sprite hasnt been already added
-    this._textures_load_stack.push(texture);
+    this._textures_load_stack.push(new EE.Texture(id, src));
 }
 
 EE.Game.prototype.addEntity = function(entity) {
