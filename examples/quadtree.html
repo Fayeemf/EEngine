@@ -1,0 +1,51 @@
+<html>
+    <head>
+        <title>Quadtree</title>
+    </head>
+    <body>
+        <canvas id="canvas" width="600" height="600"></canvas>
+    </body> 
+</html>
+<script src="../build/ee.js"></script>
+<script>
+var game = new EE.Game(document.getElementById("canvas"), function() {
+
+    this.init = function() {
+        this.setBackground("grey");
+        var gridCount = 30;
+        var cellWidth = Math.round(this.worldWidth / gridCount);
+        var cellHeight = Math.round(this.worldHeight / gridCount);
+
+        this.addTimer(1000, () => {
+            var x = Math.round(Math.random() * gridCount) * cellWidth;
+            var y = Math.round(Math.random() * gridCount) * cellHeight;
+            var b = this.addBox(x, y, cellWidth, cellHeight, "black");
+        }, true, 1000);
+    }
+
+    this.update = function() {
+        var entities = this.getEntities(EE.Box);
+        for(var i = 0; i < this._entities.length; i++) {
+            if (this._entities[i] instanceof EE.Box) {
+                this._entities[i].setColor("black");
+            }
+        }
+
+        var newPos = this.getCamera().toWorldPoint({x: this.cursor.x, y: this.cursor.y});
+        var bounds = {x: newPos.x, y: newPos.y, width:1, height:1};
+        
+        var entities = this.getEntitiesInBounds(bounds);
+        for(var i = 0; i < entities.length; i++) {
+            if (entities[i] instanceof EE.Box) {
+                entities[i].setColor("red");
+            }
+        }
+    }
+
+    this.render = function() {
+        this._quadtree.renderDebug();
+    }
+});
+
+game.run();
+</script>
