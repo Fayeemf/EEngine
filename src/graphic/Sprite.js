@@ -49,7 +49,7 @@ EE.Sprite.prototype.collide = function(other, callback) {
 
 EE.Sprite.prototype.click = function(callback) {
     this.game._addClickListener((event) => {
-        if(this.contains({"x": event.offsetX, "y": event.offsetY}) && this.clickable){
+        if(this.contains(this.game.getCamera().toWorldPoint({x: event.offsetX, y: event.offsetY})) && this.clickable){
             callback();
         }
     });
