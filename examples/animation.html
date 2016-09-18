@@ -17,16 +17,17 @@ function init() {
     game.setBackground("lightGray");
     
     spr = game.addSprite("bunny", game.clientWidth / 2 - 35, game.clientHeight / 2 - 35, 70, 70);
+    var animator = new EE.Animator(game, spr);
     spr.click(() => {
         console.log("clicked");
-        game.getCamera().lerpTo({x: 50, y:60}, () => {
+        animator.lerpTo({x: 0, y:0}, () => {
             console.log("first lerp done");
-            game.getCamera().addPath([
+            animator.addPath([
                 {to: {x: 100, y: 60}},
                 {to: {x: 100, y: 200}},
                 {to:{x: 10, y: -10}},
                 {to:{x: 0, y: 0}, callback: () => {console.log("end of path")}},                
-            ])
+            ]);
         });
     });
 }

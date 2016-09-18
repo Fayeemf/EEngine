@@ -32,6 +32,11 @@ EE.Sprite.prototype.update = function(dt) {
     }
 }
 
+EE.Sprite.prototype.moveTo = function(x, y) {
+    this.bounds.x = x;
+    this.bounds.y = y;
+}
+
 EE.Sprite.prototype.setZ = function(z) {
     this.z_index = z;
     this.game._orderSpritesZIndex();
