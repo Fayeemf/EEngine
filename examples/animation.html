@@ -23,11 +23,19 @@ function init() {
         animator.lerpTo({x: 0, y:0}, () => {
             console.log("first lerp done");
             animator.addPath([
-                {to: {x: 100, y: 60}},
-                {to: {x: 100, y: 200}},
+                {to: {x: 100, y: 60}, callback: () => {
+                    animator.pause(2000, () => {
+                        console.log("resuming animation !");
+                    });
+                    console.log("pausing for 2 seconds...")
+                }},
+                {to: {x: 100, y: 200}, callback: () => {
+                    animator.pause(1000);
+                }},
                 {to:{x: 10, y: -10}},
-                {to:{x: 0, y: 0}, callback: () => {console.log("end of path")}},                
-            ]);
+                {to:{x: 0, y: 0}, callback: () => {
+                    console.log("yay :)");
+                }}]);
         });
     });
 }
@@ -37,7 +45,7 @@ function render() {
 }
 
 function update() {
-    game.getCamera().moveOffset({x: 0, y: 0});
+
 }
 
 game.run();

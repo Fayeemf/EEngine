@@ -4,10 +4,15 @@ EE.Timer = function(game, delay, callback, repeat, interval) {
     this.repeat = repeat || false;
     this.interval = interval || this.delay;
     this.stopped = false;
+    this.game = game;
 
     this._start_time = new Date();
     this._next_tick = new Date()
     this._next_tick.setSeconds(this._next_tick.getSeconds() + (delay / 1000));
+}
+
+EE.Timer.prototype.start = function() {
+    this.game.addUpdatable(this);
 }
 
 EE.Timer.prototype.update = function() {
@@ -21,11 +26,12 @@ EE.Timer.prototype.update = function() {
             this._next_tick = curr_date;
             this._next_tick.setSeconds(this._next_tick.getSeconds() + (this.interval / 1000));
         } else {
-            this.stopped = true;
+            this.stop();
         }
     }
 }
 
 EE.Timer.prototype.stop = function() {
     this.stopped = true;
+    this.game.removeUpdatable(this);
 }

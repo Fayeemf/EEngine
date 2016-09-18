@@ -42,8 +42,16 @@ EE.Animator.prototype.lerpTo = function(newPos, callback) {
     this._followPath = [{to: newPos, callback:callback}];
 }
 
-EE.Animator.prototype.pause = function() {
+EE.Animator.prototype.pause = function(timeoutMilli, callback) {
     this._paused = true;
+    if(!isNaN(timeoutMilli)) {
+        new EE.Timer(this.game, timeoutMilli, () => {
+            if(typeof callback == "function") {
+                callback();
+            }
+            this.resume();
+        }).start();
+    }
 }
 
 EE.Animator.prototype.resume = function() {

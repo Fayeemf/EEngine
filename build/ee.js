@@ -44,8 +44,16 @@ EE.Animator.prototype.lerpTo = function(newPos, callback) {
     this._followPath = [{to: newPos, callback:callback}];
 }
 
-EE.Animator.prototype.pause = function() {
+EE.Animator.prototype.pause = function(timeoutMilli, callback) {
     this._paused = true;
+    if(!isNaN(timeoutMilli)) {
+        new EE.Timer(this.game, timeoutMilli, () => {
+            if(typeof callback == "function") {
+                callback();
+            }
+            this.resume();
+        }).start();
+    }
 }
 
 EE.Animator.prototype.resume = function() {
@@ -263,6 +271,27 @@ EE.Game.prototype.addRenderable = function(renderable) {
     return renderable;
 }
 
+EE.Game.prototype.removeEntity = function(entity) {
+    var i = this._entities.indexOf(entity);
+    if(i !== -1) {
+        this._entities.splice(i, 1);
+    }
+}
+
+EE.Game.prototype.removeUpdatable = function(entity) {
+    var i = this._updatables.indexOf(entity);
+    if(i !== -1) {
+        this._updatables.splice(i, 1);
+    }
+}
+
+EE.Game.prototype.removeRenderable = function(entity) {
+    var i = this._renderables.indexOf(entity);
+    if(i !== -1) {
+        this._renderables.splice(i, 1);
+    }
+}
+
 EE.Game.prototype.addSprite = function(text_id, x, y, width, height, z_index) {
     var _spr = new EE.Sprite(this, text_id, x, y, width, height, z_index);
     this._entities.push(_spr);
@@ -276,7 +305,7 @@ EE.Game.prototype.addBox = function(x, y, width, height, color) {
 }
 
 EE.Game.prototype.addTimer = function(delay, callback, repeat, interval) {
-    return this.addUpdatable(new EE.Timer(this, delay, callback, repeat, interval));
+    return new EE.Timer(this, delay, callback, repeat, interval);
 }
 
 EE.Game.prototype.setBackground = function(color) {
@@ -832,10 +861,15 @@ EE.Guid.prototype.get = function() {
     this.repeat = repeat || false;
     this.interval = interval || this.delay;
     this.stopped = false;
+    this.game = game;
 
     this._start_time = new Date();
     this._next_tick = new Date()
     this._next_tick.setSeconds(this._next_tick.getSeconds() + (delay / 1000));
+}
+
+EE.Timer.prototype.start = function() {
+    this.game.addUpdatable(this);
 }
 
 EE.Timer.prototype.update = function() {
@@ -849,11 +883,12 @@ EE.Timer.prototype.update = function() {
             this._next_tick = curr_date;
             this._next_tick.setSeconds(this._next_tick.getSeconds() + (this.interval / 1000));
         } else {
-            this.stopped = true;
+            this.stop();
         }
     }
 }
 
 EE.Timer.prototype.stop = function() {
     this.stopped = true;
+    this.game.removeUpdatable(this);
 }
