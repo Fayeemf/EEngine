@@ -21,7 +21,7 @@ EE.Animator.prototype.update = function(dt) {
         var path = this._followPath[0];
         var to = path.to;
 
-        var newPos = EE.Vector2.lerp(this.obj.bounds, to, 0.1);
+        var newPos = EE.Vector2.lerp(this.obj.bounds, to, 5 * dt);
         this.obj.moveTo(newPos.x, newPos.y);
         if(Math.abs(this.obj.bounds.x - to.x) <= 0.1 && Math.abs(this.obj.bounds.y - to.y) <= 0.1) {
             if(typeof path.callback != "undefined") {
@@ -834,16 +834,38 @@ EE.Box.prototype.setColor = function(color) {
     this.src = src;
     this.scale = scale;
 
-    this.init();
+    this._loadcb = null;
 }
 
 EE.TiledMap.prototype.init = function() {
-    
+    var xhr;
+    if (window.XMLHttpRequest) {
+        xhr = new XMLHttpRequest();
+    } else if (window.ActiveXObject) {
+        xhr = new ActiveXObject("Microsoft.XMLHTTP");
+    }
+
+    xhr.onload = () => {this._loaded(xhr); };
+    xhr.open("GET", this.src);
+    xhr.send();
 }
 
-EE.TiledMap.prototype._onFileRead = function(content) {
-    
-};EE.Guid = function() {
+EE.TiledMap.prototype.onLoad = function(callback) {
+    if(typeof callback != "function") {
+        throw "onLoad callback must be a function, " + typeof callback + " provided";
+    }
+    this._loadcb = callback;
+}
+
+EE.TiledMap.prototype._loaded = function(xhr) {
+    var resp = xhr.responseText;
+    var parser = new DOMParser();
+    var xmlDoc = parser.parseFromString(resp, "text/xml");
+    if(this._loadcb) {
+        this._loadcb(resp);
+    }
+} 
+;EE.Guid = function() {
 }
 
 EE.Guid.prototype.get = function() {

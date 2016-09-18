@@ -19,7 +19,7 @@ EE.Animator.prototype.update = function(dt) {
         var path = this._followPath[0];
         var to = path.to;
 
-        var newPos = EE.Vector2.lerp(this.obj.bounds, to, 0.1);
+        var newPos = EE.Vector2.lerp(this.obj.bounds, to, 5 * dt);
         this.obj.moveTo(newPos.x, newPos.y);
         if(Math.abs(this.obj.bounds.x - to.x) <= 0.1 && Math.abs(this.obj.bounds.y - to.y) <= 0.1) {
             if(typeof path.callback != "undefined") {
