@@ -8,6 +8,10 @@ EE.GraphicRenderer.prototype.drawImage = function(src, x, y, width, height) {
     this.game._context.drawImage(src, x, y, width, height);
 }
 
+EE.GraphicRenderer.prototype.drawImagePart = function(src,sx,sy,swidth,sheight,x,y,width,height) {
+    this.game._context.drawImage(src, sx,sy,swidth,sheight,x,y,width,height);
+}
+
 EE.GraphicRenderer.prototype.drawRectangle = function(x, y, width, height, color) {
     this.game._context.save();
     this.game._context.strokeStyle = color || this.default_stroke_color;

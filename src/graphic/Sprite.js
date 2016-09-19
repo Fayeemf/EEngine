@@ -61,10 +61,10 @@ EE.Sprite.prototype.click = function(callback) {
 }
 
 EE.Sprite.prototype.intersects = function(other) {
-    return !(other.left() > this.right() || 
-        other.right() < this.left() || 
-        other.top() > this.bottom() ||
-        other.bottom() < this.top());
+    return !(other.bounds.left() > this.bounds.right() || 
+        other.bounds.right() < this.bounds.left() || 
+        other.bounds.top() > this.bounds.bottom() ||
+        other.bounds.bottom() < this.bounds.top());
 }
 
 EE.Sprite.prototype.contains = function(p) {
