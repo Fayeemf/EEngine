@@ -1,12 +1,13 @@
 var EE = {
     
-};EE.Animator = function(game, obj, path) {
+};EE.Animator = function(game, obj, path, speed) {
     this.game = game;
     this.obj = obj;
     this._followPath = [];
     this._paused = false;
+    this.speed = speed || 2;
     
-    if(typeof path != "undefined") {
+    if(typeof path != "undefined" && path) {
         this.addPath(path);
     }
     this._init();
@@ -21,7 +22,7 @@ EE.Animator.prototype.update = function(dt) {
         var path = this._followPath[0];
         var to = path.to;
 
-        var newPos = EE.Vector2.lerp(this.obj.bounds, to, 5 * dt);
+        var newPos = EE.Vector2.lerp(this.obj.bounds, to, this.speed * dt);
         this.obj.moveTo(newPos.x, newPos.y);
         if(Math.abs(this.obj.bounds.x - to.x) <= 0.1 && Math.abs(this.obj.bounds.y - to.y) <= 0.1) {
             if(typeof path.callback != "undefined") {
@@ -29,6 +30,12 @@ EE.Animator.prototype.update = function(dt) {
             }
             this._followPath.splice(0, 1);
         }
+    }
+}
+
+EE.Animator.prototype.setSpeed = function(speed) {
+    if(!isNaN(timeoutMilli) && speed >= 0) {
+        this.speed = speed;
     }
 }
 
@@ -849,7 +856,19 @@ EE.Box.prototype.update = function(dt) {
 EE.Box.prototype.setColor = function(color) {
     // TODO : Input validation for color
     this.color = color;
-};EE.TiledMap = function(game, src, scale) {
+};function parseConfig(xml, config) {
+    var attrs = {};
+    for(var i = 0; i < config.length; i++) {
+        var attr = config[i];
+        var elem = xml.getAttribute(attr);
+        if(typeof elem != "undefined") {
+            attrs[attr] = elem;
+        }
+    }
+    return attrs;
+}
+
+EE.TiledMap = function(game, src, scale) {
     this.game = game;
     this.src = src;
     this.scale = scale;
@@ -865,6 +884,12 @@ EE.Box.prototype.setColor = function(color) {
     this.layers = [];
 
     this._loadcb = null;
+    this.conf = ["version", "orientation", "renderorder", "width", "height",
+        "tilewidth", "tileheight", "hexsidelength", "staggeraxis", "staggerindex",
+        "backgroundcolor", "nextobjectid"];
+    this.attrs = [];
+    this.tilesets = [];
+
 }
 
 EE.TiledMap.prototype.init = function() {
@@ -895,30 +920,16 @@ EE.TiledMap.prototype._loaded = function(xhr) {
         this._loadcb(resp);
     }
 
-    this.firstgid = xmlDoc.getElementsByTagName("tileset")[0].getAttribute("firstgid");
-    this.name = this._getFromTag(xmlDoc, "tileset", "name");
-    this.tilewidth = this._getFromTag(xmlDoc, "tileset", "tilewidth", true);
-    this.tileheight = this._getFromTag(xmlDoc, "tileset", "tileheight", true);
-    this.tilecount = this._getFromTag(xmlDoc, "tileset", "tilecount", true);
-    this.source = this._getFromTag(xmlDoc, "image", "source");
-    this.source_width = this._getFromTag(xmlDoc, "image", "width", true);
-    this.source_height = this._getFromTag(xmlDoc, "image", "height");
+    this.attrs = parseConfig(xmlDoc.getElementsByTagName("map")[0], this.conf);
+    var tilesetsXml = xmlDoc.getElementsByTagName("tileset");
+    for(var i = 0; i < tilesetsXml.length; i++) {
+        this.tilesets.push(new EE.TiledMapTileset(this, tilesetsXml[i]));
+    }
 
     var layers = xmlDoc.getElementsByTagName("layer");
     for(var i = 0; i < layers.length; i++) {
-        var l = layers[i];
-
-        var layername = l.getAttribute("name");
-        var layerWidth = parseInt(l.getAttribute("width"));
-        var layerHeight = parseInt(l.getAttribute("height"));
-        var encoding = this._getFromTag(l, "data", "encoding");
-        var data = l.getElementsByTagName("data")[0].textContent;
-        var tmpArr = data.split(',');
-        var arr = [];
-        for(var j = 0; j < tmpArr.length; j++) {
-            arr.push(parseInt(tmpArr[j]));
-        }
-        var layer = new EE.TiledMapLayer(this, layername, layerWidth, layerHeight, arr, encoding);
+        var data = layers[i].getElementsByTagName("data")[0].textContent;
+        var layer = new EE.TiledMapLayer(this, this.tilesets[0], layers[i], data);
         this.layers.push(layer);
         layer.init();
     }
@@ -938,42 +949,88 @@ EE.TiledMap.prototype.render = function() {
     } 
 }
 
-EE.TiledMapLayer = function(tilemap, name, width, height, data, encoding) {
-    this.tilemap = tilemap;
-    this.name = name;
-    this.width = width;
-    this.height = height;
-    this.data = data;
-    this.encoding = encoding;
 
-    this.img;
+EE.TiledMapTileset = function(map, xmlNode) {
+    this.map = map;
+    this.xml = xmlNode;
+
+    this.conf = ["firstgid", "source", "name", "tilewidth", "tileheight",
+        "spacing", "margin", "tilecount", "columns"];
+    this.attrs = parseConfig(this.xml, this.conf);
+    this.image = new EE.TiledMapImage(this.map, this, this.xml.getElementsByTagName("image")[0]);
+}
+
+EE.TiledMapImage = function(map, tileset, xmlNode) {
+    this.map = map;
+    this.xml = xmlNode;
+    this.tileset = tileset;
+
+    this.conf = ["format", "id", "source", "trans", "width", "height"];
+    this.attrs = parseConfig(this.xml, this.conf);
+}
+
+
+EE.TiledMapLayer = function(map, tileset, xmlNode) {
+    this.map = map;
+    this.xml = xmlNode;
+    this.tileset = tileset;
+
+    this.conf = ["name", "x", "y", "width", "height", "opacity", "visible",
+        "offsetx", "offsety"];
+    this.attrs = parseConfig(this.xml, this.conf);
+
+    var tmpData = xmlNode.getElementsByTagName("data")[0].textContent;
+    this.data = [];
+    
+    var tmpArr = tmpData.split(',');
+    for(var j = 0; j < tmpArr.length; j++) {
+        this.data.push(parseInt(tmpArr[j]));
+    }
 }
 
 EE.TiledMapLayer.prototype.init = function() {
     this.img = new Image();
-    this.img.src = this.tilemap.source;
+    this.img.src = this.tileset.image.attrs["source"];
 }
 
 EE.TiledMapLayer.prototype.render = function() {
     if(this.img.complete) {
-        var rows = this.tilemap.source_width / this.tilemap.tilewidth;
-        var cols = this.tilemap.source_height / this.tilemap.tileheight;
+        var tileWidth = parseInt(this.tileset.attrs["tilewidth"]);
+        var tileHeight = parseInt(this.tileset.attrs["tileheight"]);
+
+        var imgWidth = parseInt(this.tileset.image.attrs["width"]);
+        var imgHeight = parseInt(this.tileset.image.attrs["height"]);
+        
+        var rows = imgWidth / tileWidth;
+        var cols = imgHeight / tileHeight;
+
+        var width = parseInt(this.attrs["width"]);
+        var height = parseInt(this.attrs["height"]);
+
         for(var i = 0; i < this.data.length; i++) {
-            var tileAmountWidth = this.tilemap.source_width / this.tilemap.tilewidth;
+            var tileAmountWidth = imgWidth / tileWidth;
 
             var y = Math.ceil(this.data[i] / tileAmountWidth) - 1;
             var x = this.data[i] - (tileAmountWidth * y) - 1;
+
+            var transformed = this.map.game._camera.toScreen(
+                {
+                    x: (Math.floor(i%width) * tileWidth * this.map.scale),
+                    y:(Math.floor(i/width) * tileHeight * this.map.scale),
+                    width: tileWidth * this.map.scale, 
+                    height: tileHeight * this.map.scale
+                });
             
-            this.tilemap.game.getRenderer().drawImagePart(
+            this.map.game.getRenderer().drawImagePart(
                 this.img, 
-                x * this.tilemap.tilewidth,
-                y * this.tilemap.tileheight, 
-                this.tilemap.tilewidth, 
-                this.tilemap.tileheight, 
-                (Math.floor(i%this.width) * this.tilemap.tilewidth * this.tilemap.scale), 
-                (Math.floor(i/this.width) * this.tilemap.tileheight * this.tilemap.scale), 
-                this.tilemap.tilewidth * this.tilemap.scale, 
-                this.tilemap.tileheight * this.tilemap.scale);
+                x * tileWidth,
+                y * tileHeight, 
+                tileWidth, 
+                tileHeight, 
+                transformed.x, 
+                transformed.y, 
+                transformed.width, 
+                transformed.height);
         }
         
     }

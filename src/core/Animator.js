@@ -1,10 +1,11 @@
-EE.Animator = function(game, obj, path) {
+EE.Animator = function(game, obj, path, speed) {
     this.game = game;
     this.obj = obj;
     this._followPath = [];
     this._paused = false;
+    this.speed = speed || 2;
     
-    if(typeof path != "undefined") {
+    if(typeof path != "undefined" && path) {
         this.addPath(path);
     }
     this._init();
@@ -19,7 +20,7 @@ EE.Animator.prototype.update = function(dt) {
         var path = this._followPath[0];
         var to = path.to;
 
-        var newPos = EE.Vector2.lerp(this.obj.bounds, to, 5 * dt);
+        var newPos = EE.Vector2.lerp(this.obj.bounds, to, this.speed * dt);
         this.obj.moveTo(newPos.x, newPos.y);
         if(Math.abs(this.obj.bounds.x - to.x) <= 0.1 && Math.abs(this.obj.bounds.y - to.y) <= 0.1) {
             if(typeof path.callback != "undefined") {
@@ -27,6 +28,12 @@ EE.Animator.prototype.update = function(dt) {
             }
             this._followPath.splice(0, 1);
         }
+    }
+}
+
+EE.Animator.prototype.setSpeed = function(speed) {
+    if(!isNaN(timeoutMilli) && speed >= 0) {
+        this.speed = speed;
     }
 }
 
