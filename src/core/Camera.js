@@ -6,19 +6,34 @@ EE.Camera = function(game, x, y, scale) {
     this.bounds = new EE.Rect(x, y, this.game.clientWidth * this.scale, this.game.clientHeight * this.scale);
 
     this._followPath = [];
+    this._limit = null;
 }
 
-EE.Camera.prototype.update = function() {
+EE.Camera.prototype.update = function(dt) {
     if(this.followed) {
-        this.centerObject(this.followed);
+        var bounds = this.followed.bounds;
+        var newPos = EE.Vector2.lerp(this.bounds, {
+            x: bounds.x - (this.bounds.width / 2) + (this.followed.bounds.width / 2), 
+            y: bounds.y - (this.bounds.height / 2) + (this.followed.bounds.height / 2)
+        }, 2 * dt);
+        
+        this.bounds.x = newPos.x;
+        this.bounds.y = newPos.y;
+    }
+
+    if(this._limit) {
+        if(this.bounds.x < this._limit.x) this.bounds.x = this._limit.x;
+        if(this.bounds.x + this.bounds.width > this._limit.x + this._limit.width) this.bounds.x = this._limit.x + this._limit.width - this.bounds.width;
+
+        if(this.bounds.y < this._limit.y) this.bounds.y = this._limit.y;
+        if(this.bounds.y + this.bounds.height > this._limit.y + this._limit.height) this.bounds.y = this._limit.y + this._limit.height - this.bounds.height;
     }
 }
 
-EE.Camera.prototype.centerObject = function(obj) {
-    var bounds = this.followed.bounds;
-    this.bounds.x = bounds.x - (this.bounds.width / 2) + (this.followed.bounds.width / 2);
-    this.bounds.y = bounds.y - (this.bounds.height / 2) + (this.followed.bounds.height / 2);
+EE.Camera.prototype.setBoundsLimit = function(bounds) {
+    this._limit = bounds;
 }
+
 
 EE.Camera.prototype.follow = function(obj) {
     this.followed = obj;

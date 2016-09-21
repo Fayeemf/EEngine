@@ -86,15 +86,19 @@ EE.Game.prototype._update = function() {
     this._tryCall(this._scene.update);
 }
 
+
 EE.Game.prototype._render = function() {
     this._context.clearRect(0, 0, this._canvas.width, this._canvas.height);
     this._context.beginPath();
+
+    this._tryCall(this._scene.prerender);
 
     var toRender = this.getEntitiesInBounds(this._camera.x, this._camera.y, this._camera.vWidth, this._camera.vHeight);
     for(var i = 0; i < toRender.length; i++) {
         toRender[i].render();
     }
     this._tryCall(this._scene.render);
+    this._tryCall(this._scene.postrender);
     this._context.closePath();
 }
 

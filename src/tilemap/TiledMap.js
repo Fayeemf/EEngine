@@ -14,24 +14,14 @@ EE.TiledMap = function(game, src, scale) {
     this.game = game;
     this.src = src;
     this.scale = scale;
-
-    this.firstgid;
-    this.name;
-    this.tilewidth;
-    this.tileheight;
-    this.tilecount;
-    this.source;
-    this.source_width;
-    this.source_height;
     this.layers = [];
 
-    this._loadcb = null;
     this.conf = ["version", "orientation", "renderorder", "width", "height",
         "tilewidth", "tileheight", "hexsidelength", "staggeraxis", "staggerindex",
         "backgroundcolor", "nextobjectid"];
     this.attrs = [];
     this.tilesets = [];
-
+    this.bounds = null;
 }
 
 EE.TiledMap.prototype.init = function() {
@@ -58,9 +48,6 @@ EE.TiledMap.prototype._loaded = function(xhr) {
     var resp = xhr.responseText;
     var parser = new DOMParser();
     var xmlDoc = parser.parseFromString(resp, "text/xml");
-    if(this._loadcb) {
-        this._loadcb(resp);
-    }
 
     this.attrs = parseConfig(xmlDoc.getElementsByTagName("map")[0], this.conf);
     var tilesetsXml = xmlDoc.getElementsByTagName("tileset");
@@ -74,6 +61,19 @@ EE.TiledMap.prototype._loaded = function(xhr) {
         var layer = new EE.TiledMapLayer(this, this.tilesets[0], layers[i], data);
         this.layers.push(layer);
         layer.init();
+    }
+    var x = parseInt(this.layers[0].attrs["x"] || 0);
+    var y = parseInt(this.layers[0].attrs["y"] || 0);
+    var w = parseInt(this.layers[0].attrs["width"]);
+    var h = parseInt(this.layers[0].attrs["height"]);
+
+    var tW = parseInt(this.attrs["tilewidth"]);
+    var tH = parseInt(this.attrs["tileheight"]);
+
+    this.bounds = new EE.Rect(x, y, w * tW * this.scale, h * tH * this.scale);
+
+    if(this._loadcb) {
+        this._loadcb(resp);
     }
 } 
 

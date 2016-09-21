@@ -9,23 +9,34 @@
 <script src="../build/ee.js"></script>
 <script>
 
-var game = new EE.Game(document.getElementById("canvas"), {init: init, update: update, render: render});
+var game = new EE.Game(document.getElementById("canvas"), {init: init, update: update, prerender: prerender});
 var spr;
 var map;
 function init() {
     game.setBackground("lightGray");
+    game.loadTexture("bunny", "res/bunny.png");
+
+    spr = game.addSprite("bunny", 200, 300, 60, 60);
+
     map = new EE.TiledMap(game, "res/test.tmx", 2);
-    map.onLoad((resp) => {
-        console.log("not bad ;)" + resp);
+    map.onLoad(() => {
+        var transformed = game.getCamera().toScreen(map.bounds);
+        var animator = new EE.Animator(game, game.getCamera(), null, 1);
+        game.getCamera().setBoundsLimit(map.bounds);
+        game.getCamera().follow(spr);
+        
+        var bunny_animator = new EE.Animator(game, spr);
+        game.click(function(event) {
+            var pos = game.getCamera().toWorldPoint({x: event.x - spr.bounds.width/2, y: event.y - spr.bounds.height/2});
+            bunny_animator.lerpTo(pos);
+        });
     });
     map.init();
-    var animator = new EE.Animator(game, game.getCamera(), null, 0.01);
-    animator.addPath([
-        {to: {x: 500, y: 2000}}
-    ]);
 }
 
-function render() {
+// Since the map is the first element that needs to be renderer, 
+// we render it before the main render call
+function postrender() {
     map.render();
 }
 

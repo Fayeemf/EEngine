@@ -77,19 +77,34 @@ EE.Animator.prototype.stop = function() {
     this.bounds = new EE.Rect(x, y, this.game.clientWidth * this.scale, this.game.clientHeight * this.scale);
 
     this._followPath = [];
+    this._limit = null;
 }
 
-EE.Camera.prototype.update = function() {
+EE.Camera.prototype.update = function(dt) {
     if(this.followed) {
-        this.centerObject(this.followed);
+        var bounds = this.followed.bounds;
+        var newPos = EE.Vector2.lerp(this.bounds, {
+            x: bounds.x - (this.bounds.width / 2) + (this.followed.bounds.width / 2), 
+            y: bounds.y - (this.bounds.height / 2) + (this.followed.bounds.height / 2)
+        }, 2 * dt);
+        
+        this.bounds.x = newPos.x;
+        this.bounds.y = newPos.y;
+    }
+
+    if(this._limit) {
+        if(this.bounds.x < this._limit.x) this.bounds.x = this._limit.x;
+        if(this.bounds.x + this.bounds.width > this._limit.x + this._limit.width) this.bounds.x = this._limit.x + this._limit.width - this.bounds.width;
+
+        if(this.bounds.y < this._limit.y) this.bounds.y = this._limit.y;
+        if(this.bounds.y + this.bounds.height > this._limit.y + this._limit.height) this.bounds.y = this._limit.y + this._limit.height - this.bounds.height;
     }
 }
 
-EE.Camera.prototype.centerObject = function(obj) {
-    var bounds = this.followed.bounds;
-    this.bounds.x = bounds.x - (this.bounds.width / 2) + (this.followed.bounds.width / 2);
-    this.bounds.y = bounds.y - (this.bounds.height / 2) + (this.followed.bounds.height / 2);
+EE.Camera.prototype.setBoundsLimit = function(bounds) {
+    this._limit = bounds;
 }
+
 
 EE.Camera.prototype.follow = function(obj) {
     this.followed = obj;
@@ -217,15 +232,19 @@ EE.Game.prototype._update = function() {
     this._tryCall(this._scene.update);
 }
 
+
 EE.Game.prototype._render = function() {
     this._context.clearRect(0, 0, this._canvas.width, this._canvas.height);
     this._context.beginPath();
+
+    this._tryCall(this._scene.prerender);
 
     var toRender = this.getEntitiesInBounds(this._camera.x, this._camera.y, this._camera.vWidth, this._camera.vHeight);
     for(var i = 0; i < toRender.length; i++) {
         toRender[i].render();
     }
     this._tryCall(this._scene.render);
+    this._tryCall(this._scene.postrender);
     this._context.closePath();
 }
 
@@ -872,24 +891,14 @@ EE.TiledMap = function(game, src, scale) {
     this.game = game;
     this.src = src;
     this.scale = scale;
-
-    this.firstgid;
-    this.name;
-    this.tilewidth;
-    this.tileheight;
-    this.tilecount;
-    this.source;
-    this.source_width;
-    this.source_height;
     this.layers = [];
 
-    this._loadcb = null;
     this.conf = ["version", "orientation", "renderorder", "width", "height",
         "tilewidth", "tileheight", "hexsidelength", "staggeraxis", "staggerindex",
         "backgroundcolor", "nextobjectid"];
     this.attrs = [];
     this.tilesets = [];
-
+    this.bounds = null;
 }
 
 EE.TiledMap.prototype.init = function() {
@@ -916,9 +925,6 @@ EE.TiledMap.prototype._loaded = function(xhr) {
     var resp = xhr.responseText;
     var parser = new DOMParser();
     var xmlDoc = parser.parseFromString(resp, "text/xml");
-    if(this._loadcb) {
-        this._loadcb(resp);
-    }
 
     this.attrs = parseConfig(xmlDoc.getElementsByTagName("map")[0], this.conf);
     var tilesetsXml = xmlDoc.getElementsByTagName("tileset");
@@ -932,6 +938,19 @@ EE.TiledMap.prototype._loaded = function(xhr) {
         var layer = new EE.TiledMapLayer(this, this.tilesets[0], layers[i], data);
         this.layers.push(layer);
         layer.init();
+    }
+    var x = parseInt(this.layers[0].attrs["x"] || 0);
+    var y = parseInt(this.layers[0].attrs["y"] || 0);
+    var w = parseInt(this.layers[0].attrs["width"]);
+    var h = parseInt(this.layers[0].attrs["height"]);
+
+    var tW = parseInt(this.attrs["tilewidth"]);
+    var tH = parseInt(this.attrs["tileheight"]);
+
+    this.bounds = new EE.Rect(x, y, w * tW * this.scale, h * tH * this.scale);
+
+    if(this._loadcb) {
+        this._loadcb(resp);
     }
 } 
 

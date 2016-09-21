@@ -13,7 +13,7 @@ var game = new EE.Game(document.getElementById("canvas"), {init: init, update: u
 var spr;
 
 function init() {
-    game.loadTexture("bunny", "http://orig13.deviantart.net/e5bc/f/2013/264/7/f/kawaii_bunny_png_by_snsdmiho22-d6n5vse.png");
+    game.loadTexture("bunny", "res/bunny.png");
     game.setBackground("lightGray");
     
     spr = game.addSprite("bunny", game.clientWidth / 2 - 35, game.clientHeight / 2 - 35, 70, 70);
