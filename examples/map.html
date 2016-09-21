@@ -36,7 +36,7 @@ function init() {
 
 // Since the map is the first element that needs to be renderer, 
 // we render it before the main render call
-function postrender() {
+function prerender() {
     map.render();
 }
 
