@@ -6,7 +6,7 @@ EE.Sprite = function(game, text_id, x, y, width, height, z_index) {
     this.z_index = z_index || 0;
     this.visible = true;
     this.clickable = true;
-}
+};
 
 EE.Sprite.prototype.render = function() {
     if(!this.visible) {
@@ -17,7 +17,7 @@ EE.Sprite.prototype.render = function() {
     var height = this.bounds.height || texture.height;
     var transformed = this.game._camera.toScreen({x:this.bounds.x, y:this.bounds.y, width:width, height:height});
     this.game._renderer.drawImage(texture, transformed.x, transformed.y, transformed.width, transformed.height);
-}
+};
 
 EE.Sprite.prototype.update = function(dt) {
     for(var i = 0; i < this._colliders.length; i++) {
@@ -30,17 +30,17 @@ EE.Sprite.prototype.update = function(dt) {
             this._colliders[i].hit = false;
         }
     }
-}
+};
 
 EE.Sprite.prototype.moveTo = function(x, y) {
     this.bounds.x = x;
     this.bounds.y = y;
-}
+};
 
 EE.Sprite.prototype.setZ = function(z) {
     this.z_index = z;
     this.game._orderSpritesZIndex();
-}
+};
 
 EE.Sprite.prototype.collide = function(other, callback) {
     this._colliders.push(
@@ -50,7 +50,7 @@ EE.Sprite.prototype.collide = function(other, callback) {
             "hit": false
         }
     );
-}
+};
 
 EE.Sprite.prototype.click = function(callback) {
     this.game._addClickListener((event) => {
@@ -58,17 +58,17 @@ EE.Sprite.prototype.click = function(callback) {
             callback();
         }
     });
-}
+};
 
 EE.Sprite.prototype.intersects = function(other) {
     return !(other.bounds.left() > this.bounds.right() || 
         other.bounds.right() < this.bounds.left() || 
         other.bounds.top() > this.bounds.bottom() ||
         other.bounds.bottom() < this.bounds.top());
-}
+};
 
 EE.Sprite.prototype.contains = function(p) {
     return (this.bounds.x < p.x && this.bounds.y < p.y &&
             this.bounds.x + this.bounds.width > p.x  &&
             this.bounds.y + this.bounds.height > p.y);
-}
+};

@@ -22,30 +22,30 @@ EE.Game = function(canvas, obj) {
     this._keyboardController = new EE.KeyboardController(this);
     this._lastFrameUpdate = new Date();
     this._deltaTime = 0;
-}
+};
 
 EE.Game.prototype._tryCall = function(callable) {
     if(typeof callable === "function") {
         (callable.bind(this))();
     }
-}
+};
 
 EE.Game.prototype._init = function() {
     this._canvas.addEventListener("mousedown", this._onClick.bind(this));
     this.cursor.init();
     this.addUpdatable(this._camera);
     this._tryCall(this._scene.init);
-}
+};
 
 EE.Game.prototype._addClickListener = function(callback) {
     this._click_listeners.push(callback);
-}
+};
 
 EE.Game.prototype._onClick = function(event) {
     for(var i = 0; i < this._click_listeners.length; i++) {
         (this._click_listeners[i].bind(this))(event);
     }
-}
+};
 
 EE.Game.prototype._loadTextures = function(callback) {
     if(this._textures_load_stack.length > 0) {
@@ -64,7 +64,7 @@ EE.Game.prototype._loadTextures = function(callback) {
     } else {
         callback();
     }
-}
+};
 
 EE.Game.prototype._update = function() {
     var now = new Date();
@@ -84,7 +84,7 @@ EE.Game.prototype._update = function() {
         this._updatables[i].update(this._deltaTime);
     }
     this._tryCall(this._scene.update);
-}
+};
 
 
 EE.Game.prototype._render = function() {
@@ -100,7 +100,7 @@ EE.Game.prototype._render = function() {
     this._tryCall(this._scene.render);
     this._tryCall(this._scene.postrender);
     this._context.closePath();
-}
+};
 
 EE.Game.prototype._loop = function() {
     this._update();
@@ -108,7 +108,7 @@ EE.Game.prototype._loop = function() {
     setTimeout(() => {
         window.requestAnimationFrame(this._loop.bind(this));
     }, 1000 / this._framerate);
-}
+};
 
 EE.Game.prototype._orderEntitiesZIndex = function() {
     this._entities.sort(function(a, b) {
@@ -120,7 +120,7 @@ EE.Game.prototype._orderEntitiesZIndex = function() {
         }
         return 0;
     });
-}
+};
 
 EE.Game.prototype.run = function() {
     this._init();
@@ -129,93 +129,97 @@ EE.Game.prototype.run = function() {
     this._loadTextures(() => {
         this._loop();
     });
-}
+};
 
 EE.Game.prototype.loadTexture = function(id, src) {
     // TODO : check if the sprite hasnt been already added
     this._textures_load_stack.push(new EE.Texture(id, src));
-}
+};
 
 EE.Game.prototype.addEntity = function(entity) {
     this._entities.push(entity);
     return entity;
-}
+};
 
 EE.Game.prototype.addUpdatable = function(updatable) {
     this._updatables.push(updatable);
     return updatable;
-}
+};
 
 EE.Game.prototype.addRenderable = function(renderable) {
     this._renderables.push(renderable);
     return renderable;
-}
+};
 
 EE.Game.prototype.removeEntity = function(entity) {
     var i = this._entities.indexOf(entity);
     if(i !== -1) {
         this._entities.splice(i, 1);
     }
-}
+};
 
 EE.Game.prototype.removeUpdatable = function(entity) {
     var i = this._updatables.indexOf(entity);
     if(i !== -1) {
         this._updatables.splice(i, 1);
     }
-}
+};
 
 EE.Game.prototype.removeRenderable = function(entity) {
     var i = this._renderables.indexOf(entity);
     if(i !== -1) {
         this._renderables.splice(i, 1);
     }
-}
+};
 
 EE.Game.prototype.addSprite = function(text_id, x, y, width, height, z_index) {
     var _spr = new EE.Sprite(this, text_id, x, y, width, height, z_index);
     this._entities.push(_spr);
     this._orderEntitiesZIndex();
     return _spr;
-}
+};
 
 EE.Game.prototype.addBox = function(x, y, width, height, color) {
     var box = new EE.Box(this, new EE.Rect(x, y, width, height), color);
     return this.addEntity(box);
-}
+};
 
 EE.Game.prototype.addTimer = function(delay, callback, repeat, interval) {
     return new EE.Timer(this, delay, callback, repeat, interval);
-}
+};
 
 EE.Game.prototype.setBackground = function(color) {
     this._canvas.style.backgroundColor = color;
-}
+};
 
 EE.Game.prototype.click = function(callback) {
     this._addClickListener(callback);
-}
+};
 
 EE.Game.prototype.getEntities = function(filterType) {
     if(typeof filterType != "undefined") {
         return this._entities.filter((elem) => { return elem instanceof filterType } );
     }
     return this._entities;
+};
+
+EE.Game.prototype.getTexture = function(text_id) {
+    return this._textures[text_id];
 }
 
 EE.Game.prototype.getEntitiesInBounds = function(bounds) {
     var list = this._quadtree.retrieve(bounds);
     return list;
-}
+};
 
 EE.Game.prototype.getCamera = function() {
     return this._camera;
-}
+};
 
 EE.Game.prototype.getRenderer = function() {
     return this._renderer;
-}
+};
 
 EE.Game.prototype.isDown = function(keyCode) {
     return this._keyboardController.pressed(keyCode);
-}
+};

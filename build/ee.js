@@ -168,30 +168,30 @@ EE.Camera.prototype.toWorldPoint = function(point) {
     this._keyboardController = new EE.KeyboardController(this);
     this._lastFrameUpdate = new Date();
     this._deltaTime = 0;
-}
+};
 
 EE.Game.prototype._tryCall = function(callable) {
     if(typeof callable === "function") {
         (callable.bind(this))();
     }
-}
+};
 
 EE.Game.prototype._init = function() {
     this._canvas.addEventListener("mousedown", this._onClick.bind(this));
     this.cursor.init();
     this.addUpdatable(this._camera);
     this._tryCall(this._scene.init);
-}
+};
 
 EE.Game.prototype._addClickListener = function(callback) {
     this._click_listeners.push(callback);
-}
+};
 
 EE.Game.prototype._onClick = function(event) {
     for(var i = 0; i < this._click_listeners.length; i++) {
         (this._click_listeners[i].bind(this))(event);
     }
-}
+};
 
 EE.Game.prototype._loadTextures = function(callback) {
     if(this._textures_load_stack.length > 0) {
@@ -210,7 +210,7 @@ EE.Game.prototype._loadTextures = function(callback) {
     } else {
         callback();
     }
-}
+};
 
 EE.Game.prototype._update = function() {
     var now = new Date();
@@ -230,7 +230,7 @@ EE.Game.prototype._update = function() {
         this._updatables[i].update(this._deltaTime);
     }
     this._tryCall(this._scene.update);
-}
+};
 
 
 EE.Game.prototype._render = function() {
@@ -246,7 +246,7 @@ EE.Game.prototype._render = function() {
     this._tryCall(this._scene.render);
     this._tryCall(this._scene.postrender);
     this._context.closePath();
-}
+};
 
 EE.Game.prototype._loop = function() {
     this._update();
@@ -254,7 +254,7 @@ EE.Game.prototype._loop = function() {
     setTimeout(() => {
         window.requestAnimationFrame(this._loop.bind(this));
     }, 1000 / this._framerate);
-}
+};
 
 EE.Game.prototype._orderEntitiesZIndex = function() {
     this._entities.sort(function(a, b) {
@@ -266,7 +266,7 @@ EE.Game.prototype._orderEntitiesZIndex = function() {
         }
         return 0;
     });
-}
+};
 
 EE.Game.prototype.run = function() {
     this._init();
@@ -275,96 +275,100 @@ EE.Game.prototype.run = function() {
     this._loadTextures(() => {
         this._loop();
     });
-}
+};
 
 EE.Game.prototype.loadTexture = function(id, src) {
     // TODO : check if the sprite hasnt been already added
     this._textures_load_stack.push(new EE.Texture(id, src));
-}
+};
 
 EE.Game.prototype.addEntity = function(entity) {
     this._entities.push(entity);
     return entity;
-}
+};
 
 EE.Game.prototype.addUpdatable = function(updatable) {
     this._updatables.push(updatable);
     return updatable;
-}
+};
 
 EE.Game.prototype.addRenderable = function(renderable) {
     this._renderables.push(renderable);
     return renderable;
-}
+};
 
 EE.Game.prototype.removeEntity = function(entity) {
     var i = this._entities.indexOf(entity);
     if(i !== -1) {
         this._entities.splice(i, 1);
     }
-}
+};
 
 EE.Game.prototype.removeUpdatable = function(entity) {
     var i = this._updatables.indexOf(entity);
     if(i !== -1) {
         this._updatables.splice(i, 1);
     }
-}
+};
 
 EE.Game.prototype.removeRenderable = function(entity) {
     var i = this._renderables.indexOf(entity);
     if(i !== -1) {
         this._renderables.splice(i, 1);
     }
-}
+};
 
 EE.Game.prototype.addSprite = function(text_id, x, y, width, height, z_index) {
     var _spr = new EE.Sprite(this, text_id, x, y, width, height, z_index);
     this._entities.push(_spr);
     this._orderEntitiesZIndex();
     return _spr;
-}
+};
 
 EE.Game.prototype.addBox = function(x, y, width, height, color) {
     var box = new EE.Box(this, new EE.Rect(x, y, width, height), color);
     return this.addEntity(box);
-}
+};
 
 EE.Game.prototype.addTimer = function(delay, callback, repeat, interval) {
     return new EE.Timer(this, delay, callback, repeat, interval);
-}
+};
 
 EE.Game.prototype.setBackground = function(color) {
     this._canvas.style.backgroundColor = color;
-}
+};
 
 EE.Game.prototype.click = function(callback) {
     this._addClickListener(callback);
-}
+};
 
 EE.Game.prototype.getEntities = function(filterType) {
     if(typeof filterType != "undefined") {
         return this._entities.filter((elem) => { return elem instanceof filterType } );
     }
     return this._entities;
+};
+
+EE.Game.prototype.getTexture = function(text_id) {
+    return this._textures[text_id];
 }
 
 EE.Game.prototype.getEntitiesInBounds = function(bounds) {
     var list = this._quadtree.retrieve(bounds);
     return list;
-}
+};
 
 EE.Game.prototype.getCamera = function() {
     return this._camera;
-}
+};
 
 EE.Game.prototype.getRenderer = function() {
     return this._renderer;
-}
+};
 
 EE.Game.prototype.isDown = function(keyCode) {
     return this._keyboardController.pressed(keyCode);
-};EE.Quadtree = function(game, level, bounds, max_objects, max_levels) {
+};;EE.Quadtree = function(game, level, bounds, max_objects, max_levels) {
     this.max_objects = max_objects || 2;
     this.max_levels = max_levels || 10;
     this.game = game;
@@ -546,7 +550,7 @@ EE.GraphicRenderer.prototype.drawString = function(txt, x, y) {
     this.z_index = z_index || 0;
     this.visible = true;
     this.clickable = true;
-}
+};
 
 EE.Sprite.prototype.render = function() {
     if(!this.visible) {
@@ -557,7 +561,7 @@ EE.Sprite.prototype.render = function() {
     var height = this.bounds.height || texture.height;
     var transformed = this.game._camera.toScreen({x:this.bounds.x, y:this.bounds.y, width:width, height:height});
     this.game._renderer.drawImage(texture, transformed.x, transformed.y, transformed.width, transformed.height);
-}
+};
 
 EE.Sprite.prototype.update = function(dt) {
     for(var i = 0; i < this._colliders.length; i++) {
@@ -570,17 +574,17 @@ EE.Sprite.prototype.update = function(dt) {
             this._colliders[i].hit = false;
         }
     }
-}
+};
 
 EE.Sprite.prototype.moveTo = function(x, y) {
     this.bounds.x = x;
     this.bounds.y = y;
-}
+};
 
 EE.Sprite.prototype.setZ = function(z) {
     this.z_index = z;
     this.game._orderSpritesZIndex();
-}
+};
 
 EE.Sprite.prototype.collide = function(other, callback) {
     this._colliders.push(
@@ -590,7 +594,7 @@ EE.Sprite.prototype.collide = function(other, callback) {
             "hit": false
         }
     );
-}
+};
 
 EE.Sprite.prototype.click = function(callback) {
     this.game._addClickListener((event) => {
@@ -598,20 +602,20 @@ EE.Sprite.prototype.click = function(callback) {
             callback();
         }
     });
-}
+};
 
 EE.Sprite.prototype.intersects = function(other) {
     return !(other.bounds.left() > this.bounds.right() || 
         other.bounds.right() < this.bounds.left() || 
         other.bounds.top() > this.bounds.bottom() ||
         other.bounds.bottom() < this.bounds.top());
-}
+};
 
 EE.Sprite.prototype.contains = function(p) {
     return (this.bounds.x < p.x && this.bounds.y < p.y &&
             this.bounds.x + this.bounds.width > p.x  &&
             this.bounds.y + this.bounds.height > p.y);
-};EE.Texture = function(id, src) {
+};;EE.Texture = function(id, src) {
     this.id = id;
     this.src = src;
 };EE.Cursor = function(game) {
@@ -899,7 +903,7 @@ EE.TiledMap = function(game, src, scale) {
     this.attrs = [];
     this.tilesets = [];
     this.bounds = null;
-}
+};
 
 EE.TiledMap.prototype.init = function() {
     var xhr;
@@ -912,14 +916,14 @@ EE.TiledMap.prototype.init = function() {
     xhr.onload = () => {this._loaded(xhr); };
     xhr.open("GET", this.src);
     xhr.send();
-}
+};
 
 EE.TiledMap.prototype.onLoad = function(callback) {
     if(typeof callback != "function") {
         throw "onLoad callback must be a function, " + typeof callback + " provided";
     }
     this._loadcb = callback;
-}
+};
 
 EE.TiledMap.prototype._loaded = function(xhr) {
     var resp = xhr.responseText;
@@ -939,20 +943,20 @@ EE.TiledMap.prototype._loaded = function(xhr) {
         this.layers.push(layer);
         layer.init();
     }
-    var x = parseInt(this.layers[0].attrs["x"] || 0);
-    var y = parseInt(this.layers[0].attrs["y"] || 0);
-    var w = parseInt(this.layers[0].attrs["width"]);
-    var h = parseInt(this.layers[0].attrs["height"]);
+    var x = parseInt(this.layers[0].attrs.x || 0);
+    var y = parseInt(this.layers[0].attrs.y || 0);
+    var w = parseInt(this.layers[0].attrs.width);
+    var h = parseInt(this.layers[0].attrs.height);
 
-    var tW = parseInt(this.attrs["tilewidth"]);
-    var tH = parseInt(this.attrs["tileheight"]);
+    var tW = parseInt(this.attrs.tilewidth);
+    var tH = parseInt(this.attrs.tileheight);
 
     this.bounds = new EE.Rect(x, y, w * tW * this.scale, h * tH * this.scale);
 
     if(this._loadcb) {
         this._loadcb(resp);
     }
-} 
+};
 
 EE.TiledMap.prototype._getFromTag = function(xmlDoc, tagname, attr, toInt) {
     var val =  xmlDoc.getElementsByTagName(tagname)[0].getAttribute(attr);
@@ -960,39 +964,32 @@ EE.TiledMap.prototype._getFromTag = function(xmlDoc, tagname, attr, toInt) {
         return parseInt(val);
     }
     return val;
-}
+};
+
+EE.TiledMap.prototype.getLayer = function(name) {
+    return (this.layers.filter((elem) => { return elem.attrs.name === name }))[0];
+};
 
 EE.TiledMap.prototype.render = function() {
     for(var i = 0; i < this.layers.length; i++) {
         this.layers[i].render();
     } 
-}
+};
 
+EE.TiledMap.prototype.update = function(dt) {
 
-EE.TiledMapTileset = function(map, xmlNode) {
-    this.map = map;
-    this.xml = xmlNode;
-
-    this.conf = ["firstgid", "source", "name", "tilewidth", "tileheight",
-        "spacing", "margin", "tilecount", "columns"];
-    this.attrs = parseConfig(this.xml, this.conf);
-    this.image = new EE.TiledMapImage(this.map, this, this.xml.getElementsByTagName("image")[0]);
-}
-
-EE.TiledMapImage = function(map, tileset, xmlNode) {
+};;EE.TiledMapImage = function(map, tileset, xmlNode) {
     this.map = map;
     this.xml = xmlNode;
     this.tileset = tileset;
 
     this.conf = ["format", "id", "source", "trans", "width", "height"];
     this.attrs = parseConfig(this.xml, this.conf);
-}
-
-
-EE.TiledMapLayer = function(map, tileset, xmlNode) {
+};EE.TiledMapLayer = function(map, tileset, xmlNode) {
     this.map = map;
     this.xml = xmlNode;
     this.tileset = tileset;
+    this.loaded = false;
 
     this.conf = ["name", "x", "y", "width", "height", "opacity", "visible",
         "offsetx", "offsety"];
@@ -1000,61 +997,98 @@ EE.TiledMapLayer = function(map, tileset, xmlNode) {
 
     var tmpData = xmlNode.getElementsByTagName("data")[0].textContent;
     this.data = [];
-    
+    this.tiles = [];
+
     var tmpArr = tmpData.split(',');
     for(var j = 0; j < tmpArr.length; j++) {
         this.data.push(parseInt(tmpArr[j]));
     }
-}
+
+};
 
 EE.TiledMapLayer.prototype.init = function() {
-    this.img = new Image();
-    this.img.src = this.tileset.image.attrs["source"];
-}
+    var img = new Image();
+    img.src = this.tileset.image.attrs.source;
+    img.onload = () => {
+        this.loaded = true;
+        this.map.game.loadTexture(this.id, this.tileset.image.attrs.source);
 
-EE.TiledMapLayer.prototype.render = function() {
-    if(this.img.complete) {
-        var tileWidth = parseInt(this.tileset.attrs["tilewidth"]);
-        var tileHeight = parseInt(this.tileset.attrs["tileheight"]);
+        var tileWidth = parseInt(this.tileset.attrs.tilewidth);
+        var tileHeight = parseInt(this.tileset.attrs.tileheight);
 
-        var imgWidth = parseInt(this.tileset.image.attrs["width"]);
-        var imgHeight = parseInt(this.tileset.image.attrs["height"]);
+        var imgWidth = parseInt(this.tileset.image.attrs.width);
+        var imgHeight = parseInt(this.tileset.image.attrs.height);
         
         var rows = imgWidth / tileWidth;
         var cols = imgHeight / tileHeight;
 
-        var width = parseInt(this.attrs["width"]);
-        var height = parseInt(this.attrs["height"]);
+        var width = parseInt(this.attrs.width);
+        var height = parseInt(this.attrs.height);
 
         for(var i = 0; i < this.data.length; i++) {
             var tileAmountWidth = imgWidth / tileWidth;
 
             var y = Math.ceil(this.data[i] / tileAmountWidth) - 1;
             var x = this.data[i] - (tileAmountWidth * y) - 1;
-
-            var transformed = this.map.game._camera.toScreen(
-                {
-                    x: (Math.floor(i%width) * tileWidth * this.map.scale),
-                    y:(Math.floor(i/width) * tileHeight * this.map.scale),
-                    width: tileWidth * this.map.scale, 
-                    height: tileHeight * this.map.scale
-                });
-            
-            this.map.game.getRenderer().drawImagePart(
-                this.img, 
-                x * tileWidth,
-                y * tileHeight, 
-                tileWidth, 
-                tileHeight, 
-                transformed.x, 
-                transformed.y, 
-                transformed.width, 
-                transformed.height);
+            var tile = new EE.TiledMapTile(this, img, Math.ceil(x * tileWidth),
+                                Math.ceil(y * tileHeight), tileWidth, tileHeight, 
+                                (Math.floor(i%width) * tileWidth * this.map.scale),
+                                (Math.floor(i/width) * tileHeight * this.map.scale),
+                                tileWidth * this.map.scale,  tileHeight * this.map.scale);
+            this.tiles.push(tile);
         }
-        
+    };
+};
+
+EE.TiledMapLayer.prototype.render = function() {
+    if(this.loaded && (this.attrs.visible != "false")) {
+        for(var i = 0; i < this.tiles.length; i++) {
+            this.tiles[i].render();
+        }
     }
-    
-};EE.Guid = function() {
+};;EE.TiledMapTile = function(layer, img, sx, sy, sw, sh, x, y, w, h) {
+    this.layer = layer;
+    this.img = img;
+    this.sx = sx;
+    this.sy = sy;
+    this.sw = sw;
+    this.sh = sh;
+    this.bounds = new EE.Rect(x, y, w, h);
+};
+
+EE.TiledMapTile.prototype.render = function() {
+    var transformed = this.layer.map.game._camera.toScreen(
+    {
+        x: this.bounds.x,
+        y: this.bounds.y,
+        width: this.bounds.width, 
+        height: this.bounds.height
+    });
+    this.layer.map.game.getRenderer().drawImagePart(
+        this.img, 
+        this.sx,
+        this.sy, 
+        this.sw, 
+        this.sh, 
+        transformed.x, 
+        transformed.y, 
+        transformed.width, 
+        transformed.height
+    );
+};
+
+EE.TiledMapTile.prototype.update = function(dt) {
+
+};
+;EE.TiledMapTileset = function(map, xmlNode) {
+    this.map = map;
+    this.xml = xmlNode;
+
+    this.conf = ["firstgid", "source", "name", "tilewidth", "tileheight",
+        "spacing", "margin", "tilecount", "columns"];
+    this.attrs = parseConfig(this.xml, this.conf);
+    this.image = new EE.TiledMapImage(this.map, this, this.xml.getElementsByTagName("image")[0]);
+};;EE.Guid = function() {
 }
 
 EE.Guid.prototype.get = function() {

@@ -3,28 +3,33 @@
         <title>Map</title>
     </head>
     <body>
-        <canvas id="canvas" width="1024" height="768"></canvas>
+        <canvas id="canvas" width="1280" height="1024"></canvas>
     </body> 
 </html>
 <script src="../build/ee.js"></script>
 <script>
 
-var game = new EE.Game(document.getElementById("canvas"), {init: init, update: update, prerender: prerender});
+var game = new EE.Game(document.getElementById("canvas"), {init: init, update: update, prerender: prerender, render:render});
 var spr;
 var map;
+var bg_layer, top_layer;
+
 function init() {
     game.setBackground("lightGray");
     game.loadTexture("bunny", "res/bunny.png");
 
     spr = game.addSprite("bunny", 200, 300, 60, 60);
 
-    map = new EE.TiledMap(game, "res/test.tmx", 2);
+    map = new EE.TiledMap(game, "res/map_bg.tmx", 3);
     map.onLoad(() => {
         var transformed = game.getCamera().toScreen(map.bounds);
         var animator = new EE.Animator(game, game.getCamera(), null, 1);
         game.getCamera().setBoundsLimit(map.bounds);
         game.getCamera().follow(spr);
         
+        bg_layer = map.getLayer("backgroundLayer");
+        top_layer = map.getLayer("objectsLayer");
+
         var bunny_animator = new EE.Animator(game, spr);
         game.click(function(event) {
             var pos = game.getCamera().toWorldPoint({x: event.x - spr.bounds.width/2, y: event.y - spr.bounds.height/2});
@@ -37,7 +42,14 @@ function init() {
 // Since the map is the first element that needs to be renderer, 
 // we render it before the main render call
 function prerender() {
-    map.render();
+    if(typeof top_layer != "undefined" && typeof bg_layer != "undefined") {
+        bg_layer.render();
+        top_layer.render();
+    }
+}
+
+function render() {
+    
 }
 
 function update() {
