@@ -365,6 +365,18 @@ EE.Loader.prototype.add = function(promise) {
 };
 
 EE.Loader.prototype.preloadTexture = function(id, src) {
+    if(typeof id == "undefined") {
+        throw "Texture id cannot be undefined";
+    }
+    if(typeof src == "undefined") {
+        throw "Source cannot be undefined";
+    }
+    var exists = this._textures_load_stack.filter((elem) => {
+        return elem.id == id;
+    }).length !== 0;
+    if(exists) {
+        throw "Duplicate texture id : " + id;
+    }
     this._textures_load_stack.push(new EE.Texture(id, src));
 };
 
@@ -943,16 +955,18 @@ EE.TiledMap = function(game, src, scale) {
 };
 
 EE.TiledMap.prototype.init = function() {
-    var xhr;
-    if (window.XMLHttpRequest) {
-        xhr = new XMLHttpRequest();
-    } else if (window.ActiveXObject) {
-        xhr = new ActiveXObject("Microsoft.XMLHTTP");
-    }
+    this.game._loader.add(new Promise((resolve, reject) => {
+        var xhr;
+        if (window.XMLHttpRequest) {
+            xhr = new XMLHttpRequest();
+        } else if (window.ActiveXObject) {
+            xhr = new ActiveXObject("Microsoft.XMLHTTP");
+        }
 
-    xhr.onload = () => {this._loaded(xhr); };
-    xhr.open("GET", this.src);
-    xhr.send();
+        xhr.onload = () => {this._loaded(xhr, resolve); };
+        xhr.open("GET", this.src);
+        xhr.send();
+    }));
 };
 
 EE.TiledMap.prototype.onLoad = function(callback) {
@@ -962,7 +976,7 @@ EE.TiledMap.prototype.onLoad = function(callback) {
     this._loadcb = callback;
 };
 
-EE.TiledMap.prototype._loaded = function(xhr) {
+EE.TiledMap.prototype._loaded = function(xhr, resolve) {
     var resp = xhr.responseText;
     var parser = new DOMParser();
     var xmlDoc = parser.parseFromString(resp, "text/xml");
@@ -974,12 +988,15 @@ EE.TiledMap.prototype._loaded = function(xhr) {
     }
 
     var layers = xmlDoc.getElementsByTagName("layer");
+    var promises = [];
+
     for(var i = 0; i < layers.length; i++) {
         var data = layers[i].getElementsByTagName("data")[0].textContent;
         var layer = new EE.TiledMapLayer(this, this.tilesets[0], layers[i], data);
         this.layers.push(layer);
-        layer.init();
+        promises.push(layer.load());
     }
+    
     var x = parseInt(this.layers[0].attrs.x || 0);
     var y = parseInt(this.layers[0].attrs.y || 0);
     var w = parseInt(this.layers[0].attrs.width);
@@ -993,6 +1010,10 @@ EE.TiledMap.prototype._loaded = function(xhr) {
     if(this._loadcb) {
         this._loadcb(resp);
     }
+
+    Promise.all(promises).then(() => {
+        resolve("map loaded ! ");
+    });
 };
 
 EE.TiledMap.prototype._getFromTag = function(xmlDoc, tagname, attr, toInt) {
@@ -1040,41 +1061,49 @@ EE.TiledMap.prototype.update = function(dt) {
     for(var j = 0; j < tmpArr.length; j++) {
         this.data.push(parseInt(tmpArr[j]));
     }
+    this.id = this.attrs.name || new EE.Guid.get();
 
 };
 
-EE.TiledMapLayer.prototype.init = function() {
-    var img = new Image();
-    img.src = this.tileset.image.attrs.source;
-    img.onload = () => {
-        this.loaded = true;
-        this.map.game.loadTexture(this.id, this.tileset.image.attrs.source);
+EE.TiledMapLayer.prototype.load = function() {
+    return new Promise((resolve, reject) => {
+        try {
+            var img = new Image();
+            img.src = this.tileset.image.attrs.source;
+            img.onload = () => {
+                this.loaded = true;
+                this.map.game.loadTexture(this.id, this.tileset.image.attrs.source);
 
-        var tileWidth = parseInt(this.tileset.attrs.tilewidth);
-        var tileHeight = parseInt(this.tileset.attrs.tileheight);
+                var tileWidth = parseInt(this.tileset.attrs.tilewidth);
+                var tileHeight = parseInt(this.tileset.attrs.tileheight);
 
-        var imgWidth = parseInt(this.tileset.image.attrs.width);
-        var imgHeight = parseInt(this.tileset.image.attrs.height);
-        
-        var rows = imgWidth / tileWidth;
-        var cols = imgHeight / tileHeight;
+                var imgWidth = parseInt(this.tileset.image.attrs.width);
+                var imgHeight = parseInt(this.tileset.image.attrs.height);
+                
+                var rows = imgWidth / tileWidth;
+                var cols = imgHeight / tileHeight;
 
-        var width = parseInt(this.attrs.width);
-        var height = parseInt(this.attrs.height);
+                var width = parseInt(this.attrs.width);
+                var height = parseInt(this.attrs.height);
 
-        for(var i = 0; i < this.data.length; i++) {
-            var tileAmountWidth = imgWidth / tileWidth;
+                for(var i = 0; i < this.data.length; i++) {
+                    var tileAmountWidth = imgWidth / tileWidth;
 
-            var y = Math.ceil(this.data[i] / tileAmountWidth) - 1;
-            var x = this.data[i] - (tileAmountWidth * y) - 1;
-            var tile = new EE.TiledMapTile(this, img, Math.ceil(x * tileWidth),
-                                Math.ceil(y * tileHeight), tileWidth, tileHeight, 
-                                (Math.floor(i%width) * tileWidth * this.map.scale),
-                                (Math.floor(i/width) * tileHeight * this.map.scale),
-                                tileWidth * this.map.scale,  tileHeight * this.map.scale);
-            this.tiles.push(tile);
+                    var y = Math.ceil(this.data[i] / tileAmountWidth) - 1;
+                    var x = this.data[i] - (tileAmountWidth * y) - 1;
+                    var tile = new EE.TiledMapTile(this, img, Math.ceil(x * tileWidth),
+                                        Math.ceil(y * tileHeight), tileWidth, tileHeight, 
+                                        (Math.floor(i%width) * tileWidth * this.map.scale),
+                                        (Math.floor(i/width) * tileHeight * this.map.scale),
+                                        tileWidth * this.map.scale,  tileHeight * this.map.scale);
+                    this.tiles.push(tile);
+                }
+                resolve("layer loaded");
+            };
+        } catch(e) {
+            reject("Error during loading of the layer");
         }
-    };
+    });
 };
 
 EE.TiledMapLayer.prototype.render = function() {

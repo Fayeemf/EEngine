@@ -16,6 +16,18 @@ EE.Loader.prototype.add = function(promise) {
 };
 
 EE.Loader.prototype.preloadTexture = function(id, src) {
+    if(typeof id == "undefined") {
+        throw "Texture id cannot be undefined";
+    }
+    if(typeof src == "undefined") {
+        throw "Source cannot be undefined";
+    }
+    var exists = this._textures_load_stack.filter((elem) => {
+        return elem.id == id;
+    }).length !== 0;
+    if(exists) {
+        throw "Duplicate texture id : " + id;
+    }
     this._textures_load_stack.push(new EE.Texture(id, src));
 };
 

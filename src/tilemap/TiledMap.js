@@ -25,16 +25,18 @@ EE.TiledMap = function(game, src, scale) {
 };
 
 EE.TiledMap.prototype.init = function() {
-    var xhr;
-    if (window.XMLHttpRequest) {
-        xhr = new XMLHttpRequest();
-    } else if (window.ActiveXObject) {
-        xhr = new ActiveXObject("Microsoft.XMLHTTP");
-    }
+    this.game._loader.add(new Promise((resolve, reject) => {
+        var xhr;
+        if (window.XMLHttpRequest) {
+            xhr = new XMLHttpRequest();
+        } else if (window.ActiveXObject) {
+            xhr = new ActiveXObject("Microsoft.XMLHTTP");
+        }
 
-    xhr.onload = () => {this._loaded(xhr); };
-    xhr.open("GET", this.src);
-    xhr.send();
+        xhr.onload = () => {this._loaded(xhr, resolve); };
+        xhr.open("GET", this.src);
+        xhr.send();
+    }));
 };
 
 EE.TiledMap.prototype.onLoad = function(callback) {
@@ -44,7 +46,7 @@ EE.TiledMap.prototype.onLoad = function(callback) {
     this._loadcb = callback;
 };
 
-EE.TiledMap.prototype._loaded = function(xhr) {
+EE.TiledMap.prototype._loaded = function(xhr, resolve) {
     var resp = xhr.responseText;
     var parser = new DOMParser();
     var xmlDoc = parser.parseFromString(resp, "text/xml");
@@ -56,12 +58,15 @@ EE.TiledMap.prototype._loaded = function(xhr) {
     }
 
     var layers = xmlDoc.getElementsByTagName("layer");
+    var promises = [];
+
     for(var i = 0; i < layers.length; i++) {
         var data = layers[i].getElementsByTagName("data")[0].textContent;
         var layer = new EE.TiledMapLayer(this, this.tilesets[0], layers[i], data);
         this.layers.push(layer);
-        layer.init();
+        promises.push(layer.load());
     }
+    
     var x = parseInt(this.layers[0].attrs.x || 0);
     var y = parseInt(this.layers[0].attrs.y || 0);
     var w = parseInt(this.layers[0].attrs.width);
@@ -75,6 +80,10 @@ EE.TiledMap.prototype._loaded = function(xhr) {
     if(this._loadcb) {
         this._loadcb(resp);
     }
+
+    Promise.all(promises).then(() => {
+        resolve("map loaded ! ");
+    });
 };
 
 EE.TiledMap.prototype._getFromTag = function(xmlDoc, tagname, attr, toInt) {
