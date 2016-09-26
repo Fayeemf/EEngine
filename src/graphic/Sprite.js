@@ -12,7 +12,7 @@ EE.Sprite.prototype.render = function() {
     if(!this.visible) {
         return;
     }
-    var texture = this.game._textures[this.text_id];
+    var texture = this.game.getTexture(this.text_id);
     var width = this.bounds.width || texture.width;
     var height = this.bounds.height || texture.height;
     var transformed = this.game._camera.toScreen({x:this.bounds.x, y:this.bounds.y, width:width, height:height});

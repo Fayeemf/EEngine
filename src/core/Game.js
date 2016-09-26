@@ -6,12 +6,11 @@ EE.Game = function(canvas, obj) {
     this.debug = false;
     this.cursor = new EE.Cursor(this);
 
+    this._loader = new EE.Loader();
     this._canvas = canvas;
     this._framerate = 60;
     this._context = this._canvas.getContext("2d");
     this._scene = typeof obj == "function" ? new obj() : obj; 
-    this._textures = [];
-    this._textures_load_stack = [];
     this._click_listeners = [];
     this._entities = [];
     this._updatables = [];
@@ -35,6 +34,7 @@ EE.Game.prototype._init = function() {
     this.cursor.init();
     this.addUpdatable(this._camera);
     this._tryCall(this._scene.init);
+    this._loader.init();
 };
 
 EE.Game.prototype._addClickListener = function(callback) {
@@ -44,25 +44,6 @@ EE.Game.prototype._addClickListener = function(callback) {
 EE.Game.prototype._onClick = function(event) {
     for(var i = 0; i < this._click_listeners.length; i++) {
         (this._click_listeners[i].bind(this))(event);
-    }
-};
-
-EE.Game.prototype._loadTextures = function(callback) {
-    if(this._textures_load_stack.length > 0) {
-        var texture = this._textures_load_stack[this._textures_load_stack.length - 1];
-        var img = new Image();
-        img.src = texture.src;
-        img.onload = () => {
-            var index = this._textures_load_stack.indexOf(texture);
-            if (index === -1) {
-                throw "Texture not found in the load queue";
-            }
-            this._textures_load_stack.splice(index, 1);
-            this._textures[texture.id] = img;
-            this._loadTextures(callback);
-        }
-    } else {
-        callback();
     }
 };
 
@@ -93,7 +74,7 @@ EE.Game.prototype._render = function() {
 
     this._tryCall(this._scene.prerender);
 
-    var toRender = this.getEntitiesInBounds(this._camera.x, this._camera.y, this._camera.vWidth, this._camera.vHeight);
+    var toRender = this.getEntitiesInBounds(this.getCamera().bounds);
     for(var i = 0; i < toRender.length; i++) {
         toRender[i].render();
     }
@@ -124,16 +105,14 @@ EE.Game.prototype._orderEntitiesZIndex = function() {
 
 EE.Game.prototype.run = function() {
     this._init();
-    
-    // Wait until all sprites are loaded before starting the loop
-    this._loadTextures(() => {
+    // Wait until all assets are loaded before starting the loop
+    this._loader.load().then(() => {
         this._loop();
     });
 };
 
 EE.Game.prototype.loadTexture = function(id, src) {
-    // TODO : check if the sprite hasnt been already added
-    this._textures_load_stack.push(new EE.Texture(id, src));
+    this._loader.preloadTexture(id, src);
 };
 
 EE.Game.prototype.addEntity = function(entity) {
@@ -204,8 +183,8 @@ EE.Game.prototype.getEntities = function(filterType) {
 };
 
 EE.Game.prototype.getTexture = function(text_id) {
-    return this._textures[text_id];
-}
+    return this._loader.getTexture(text_id);
+};
 
 EE.Game.prototype.getEntitiesInBounds = function(bounds) {
     var list = this._quadtree.retrieve(bounds);

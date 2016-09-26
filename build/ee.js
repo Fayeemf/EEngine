@@ -78,7 +78,7 @@ EE.Animator.prototype.stop = function() {
 
     this._followPath = [];
     this._limit = null;
-}
+};
 
 EE.Camera.prototype.update = function(dt) {
     if(this.followed) {
@@ -99,16 +99,16 @@ EE.Camera.prototype.update = function(dt) {
         if(this.bounds.y < this._limit.y) this.bounds.y = this._limit.y;
         if(this.bounds.y + this.bounds.height > this._limit.y + this._limit.height) this.bounds.y = this._limit.y + this._limit.height - this.bounds.height;
     }
-}
+};
 
 EE.Camera.prototype.setBoundsLimit = function(bounds) {
     this._limit = bounds;
-}
+};
 
 
 EE.Camera.prototype.follow = function(obj) {
     this.followed = obj;
-}
+};
 
 EE.Camera.prototype.setScale = function(scale) {
     if(scale > 1) scale = 1;
@@ -116,35 +116,35 @@ EE.Camera.prototype.setScale = function(scale) {
     this.scale = scale;
     this.bounds.width = this.game.clientWidth * this.scale;
     this.bounds.height = this.game.clientHeight * this.scale;
-}
+};
 
 EE.Camera.prototype.moveOffset = function(offset) {
     this.bounds.x += offset.x;
     this.bounds.y += offset.y;
-}
+};
 
 EE.Camera.prototype.moveTo = function(x, y) {
     this.bounds.x = x;
     this.bounds.y = y;
-}
+};
 
 EE.Camera.prototype.toScreen = function(source) {
     return new EE.Rect((source.x - this.bounds.x) / this.scale, (source.y - this.bounds.y) / this.scale, source.width / this.scale, source.height / this.scale); 
-}
+};
 
 EE.Camera.prototype.toWorld = function(source) {
     return new EE.Rect((source.x * this.scale) + this.bounds.x, (source.y * this.scale) + this.bounds.y, source.width * this.scale, source.height * this.scale);
-}
+};
 
 EE.Camera.prototype.toScreenPoint = function(point) {
     var pos = this.toScreen({x:point.x, y:point.y, width:0, height:0});
     return {x:pos.x, y:pos.y};
-}
+};
 
 EE.Camera.prototype.toWorldPoint = function(point) {
     var pos = this.toWorld({x:point.x, y:point.y, width:0, height:0});
     return {x:pos.x, y:pos.y};
-};EE.Game = function(canvas, obj) {
+};;EE.Game = function(canvas, obj) {
     this.clientWidth = canvas.width;
     this.clientHeight = canvas.height;
     this.worldWidth = obj.worldWidth || this.clientWidth;
@@ -152,12 +152,11 @@ EE.Camera.prototype.toWorldPoint = function(point) {
     this.debug = false;
     this.cursor = new EE.Cursor(this);
 
+    this._loader = new EE.Loader();
     this._canvas = canvas;
     this._framerate = 60;
     this._context = this._canvas.getContext("2d");
     this._scene = typeof obj == "function" ? new obj() : obj; 
-    this._textures = [];
-    this._textures_load_stack = [];
     this._click_listeners = [];
     this._entities = [];
     this._updatables = [];
@@ -181,6 +180,7 @@ EE.Game.prototype._init = function() {
     this.cursor.init();
     this.addUpdatable(this._camera);
     this._tryCall(this._scene.init);
+    this._loader.init();
 };
 
 EE.Game.prototype._addClickListener = function(callback) {
@@ -190,25 +190,6 @@ EE.Game.prototype._addClickListener = function(callback) {
 EE.Game.prototype._onClick = function(event) {
     for(var i = 0; i < this._click_listeners.length; i++) {
         (this._click_listeners[i].bind(this))(event);
-    }
-};
-
-EE.Game.prototype._loadTextures = function(callback) {
-    if(this._textures_load_stack.length > 0) {
-        var texture = this._textures_load_stack[this._textures_load_stack.length - 1];
-        var img = new Image();
-        img.src = texture.src;
-        img.onload = () => {
-            var index = this._textures_load_stack.indexOf(texture);
-            if (index === -1) {
-                throw "Texture not found in the load queue";
-            }
-            this._textures_load_stack.splice(index, 1);
-            this._textures[texture.id] = img;
-            this._loadTextures(callback);
-        }
-    } else {
-        callback();
     }
 };
 
@@ -239,7 +220,7 @@ EE.Game.prototype._render = function() {
 
     this._tryCall(this._scene.prerender);
 
-    var toRender = this.getEntitiesInBounds(this._camera.x, this._camera.y, this._camera.vWidth, this._camera.vHeight);
+    var toRender = this.getEntitiesInBounds(this.getCamera().bounds);
     for(var i = 0; i < toRender.length; i++) {
         toRender[i].render();
     }
@@ -270,16 +251,14 @@ EE.Game.prototype._orderEntitiesZIndex = function() {
 
 EE.Game.prototype.run = function() {
     this._init();
-    
-    // Wait until all sprites are loaded before starting the loop
-    this._loadTextures(() => {
+    // Wait until all assets are loaded before starting the loop
+    this._loader.load().then(() => {
         this._loop();
     });
 };
 
 EE.Game.prototype.loadTexture = function(id, src) {
-    // TODO : check if the sprite hasnt been already added
-    this._textures_load_stack.push(new EE.Texture(id, src));
+    this._loader.preloadTexture(id, src);
 };
 
 EE.Game.prototype.addEntity = function(entity) {
@@ -350,8 +329,8 @@ EE.Game.prototype.getEntities = function(filterType) {
 };
 
 EE.Game.prototype.getTexture = function(text_id) {
-    return this._textures[text_id];
-}
+    return this._loader.getTexture(text_id);
+};
 
 EE.Game.prototype.getEntitiesInBounds = function(bounds) {
     var list = this._quadtree.retrieve(bounds);
@@ -368,6 +347,64 @@ EE.Game.prototype.getRenderer = function() {
 
 EE.Game.prototype.isDown = function(keyCode) {
     return this._keyboardController.pressed(keyCode);
+};;EE.Loader = function() {
+    this._promises = [];
+    this._textures_load_stack = [];
+    this._textures = [];
+    this._loaded = false;
+};
+
+EE.Loader.prototype.init = function() {
+    this.add(this._loadTextures());
+};
+
+EE.Loader.prototype.add = function(promise) {
+    if(promise instanceof Promise) {
+        this._promises.push(promise);
+    }
+};
+
+EE.Loader.prototype.preloadTexture = function(id, src) {
+    this._textures_load_stack.push(new EE.Texture(id, src));
+};
+
+EE.Loader.prototype.getTexture = function(text_id) {
+    return this._textures[text_id];
+};
+
+EE.Loader.prototype.load = function() {
+    return new Promise(function(resolve, reject) {
+        Promise.all(this._promises).then((val) => {
+            resolve(true);
+            this._loaded = true;
+        }, (reason) => {
+            reject(false);
+        });
+    }.bind(this));
+};
+
+EE.Loader.prototype._loadTextures = function() {
+    return new Promise(function(resolve, reject) {
+        function load_recus() {
+            if(this._textures_load_stack.length > 0) {
+                var texture = this._textures_load_stack[this._textures_load_stack.length - 1];
+                var img = new Image();
+                img.src = texture.src;
+                img.onload = () => {
+                    var index = this._textures_load_stack.indexOf(texture);
+                    if (index === -1) {
+                        throw "Texture not found in the load queue";
+                    }
+                    this._textures_load_stack.splice(index, 1);
+                    this._textures[texture.id] = img;
+                    (load_recus.bind(this))();
+                };
+            } else {
+                resolve("loaded");
+            }            
+        }
+        (load_recus.bind(this))();
+    }.bind(this));
 };;EE.Quadtree = function(game, level, bounds, max_objects, max_levels) {
     this.max_objects = max_objects || 2;
     this.max_levels = max_levels || 10;
@@ -556,7 +593,7 @@ EE.Sprite.prototype.render = function() {
     if(!this.visible) {
         return;
     }
-    var texture = this.game._textures[this.text_id];
+    var texture = this.game.getTexture(this.text_id);
     var width = this.bounds.width || texture.width;
     var height = this.bounds.height || texture.height;
     var transformed = this.game._camera.toScreen({x:this.bounds.x, y:this.bounds.y, width:width, height:height});
@@ -1111,7 +1148,7 @@ EE.Guid.prototype.get = function() {
     this._start_time = new Date();
     this._next_tick = new Date()
     this._next_tick.setSeconds(this._next_tick.getSeconds() + (delay / 1000));
-}
+};
 
 EE.Timer.prototype.start = function() {
     this.game.addUpdatable(this);
@@ -1131,9 +1168,9 @@ EE.Timer.prototype.update = function() {
             this.stop();
         }
     }
-}
+};
 
 EE.Timer.prototype.stop = function() {
     this.stopped = true;
     this.game.removeUpdatable(this);
-}
+};

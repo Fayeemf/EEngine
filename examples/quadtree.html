@@ -20,7 +20,7 @@ var game = new EE.Game(document.getElementById("canvas"), function() {
             var x = Math.round(Math.random() * gridCount) * cellWidth;
             var y = Math.round(Math.random() * gridCount) * cellHeight;
             var b = this.addBox(x, y, cellWidth, cellHeight, "black");
-        }, true, 1000);
+        }, true, 1000).start();
     }
 
     this.update = function() {
