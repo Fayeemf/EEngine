@@ -16,7 +16,7 @@ EE.TiledMapLayer = function(map, tileset, xmlNode) {
     for(var j = 0; j < tmpArr.length; j++) {
         this.data.push(parseInt(tmpArr[j]));
     }
-    this.id = this.attrs.name || new EE.Guid.get();
+    this.id = this.attrs.name || new EE.Guid().get();
 
 };
 
