@@ -17,6 +17,7 @@ EE.TiledMapLayer = function(map, tileset, xmlNode) {
         this.data.push(parseInt(tmpArr[j]));
     }
     this.id = this.attrs.name || new EE.Guid.get();
+    this._img = null;
 
 };
 
@@ -54,6 +55,7 @@ EE.TiledMapLayer.prototype.load = function() {
                     this.tiles.push(tile);
                 }
                 resolve("layer loaded");
+                this._create_tile();
             };
         } catch(e) {
             reject("Error during loading of the layer");
@@ -61,10 +63,29 @@ EE.TiledMapLayer.prototype.load = function() {
     });
 };
 
+EE.TiledMapLayer.prototype._create_tile = function() {
+    var canvas = document.createElement("canvas");
+    canvas.width = this.map.bounds.width;
+    canvas.height = this.map.bounds.height;
+
+    for(var i = 0; i < this.tiles.length; i++) {
+        var tile = this.tiles[i];
+        canvas.getContext("2d").drawImage(tile.toImage(), tile.bounds.x, tile.bounds.y, tile.bounds.width, tile.bounds.height);
+    }
+    this._img = new Image();
+    this._img.setAttribute('crossOrigin', 'anonymous');
+    this._img.src = canvas.toDataURL("image/png");
+};
+
 EE.TiledMapLayer.prototype.render = function() {
     if(this.loaded && (this.attrs.visible != "false")) {
-        for(var i = 0; i < this.tiles.length; i++) {
-            this.tiles[i].render();
-        }
+        var transformed = this.map.game._camera.toScreen(
+        {
+            x: 0,
+            y: 0,
+            width: this._img.width, 
+            height: this._img.height
+        });
+        this.map.game.getRenderer().drawImage(this._img, transformed.x, transformed.y, transformed.width, transformed.height);
     }
 };

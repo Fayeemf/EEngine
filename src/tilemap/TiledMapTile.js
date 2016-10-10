@@ -8,25 +8,25 @@ EE.TiledMapTile = function(layer, img, sx, sy, sw, sh, x, y, w, h) {
     this.bounds = new EE.Rect(x, y, w, h);
 };
 
-EE.TiledMapTile.prototype.render = function() {
-    var transformed = this.layer.map.game._camera.toScreen(
-    {
-        x: this.bounds.x,
-        y: this.bounds.y,
-        width: this.bounds.width, 
-        height: this.bounds.height
-    });
-    this.layer.map.game.getRenderer().drawImagePart(
+EE.TiledMapTile.prototype.toImage = function() {
+    var canvas = document.createElement("canvas");
+    canvas.width = this.bounds.width;
+    canvas.height = this.bounds.height;
+    canvas.getContext("2d").drawImage(
         this.img, 
         this.sx,
         this.sy, 
         this.sw, 
-        this.sh, 
-        transformed.x, 
-        transformed.y, 
-        transformed.width, 
-        transformed.height
+        this.sh,
+        0,
+        0,
+        this.bounds.width,
+        this.bounds.height
     );
+    var _img = new Image();
+    _img.setAttribute('crossOrigin', 'anonymous');
+    _img.src = canvas.toDataURL("image/png");
+    return _img;
 };
 
 EE.TiledMapTile.prototype.update = function(dt) {
