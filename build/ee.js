@@ -630,6 +630,11 @@ EE.Sprite.prototype.moveTo = function(x, y) {
     this.bounds.y = y;
 };
 
+EE.Sprite.prototype.moveOffset = function(x, y) {
+    this.bounds.x += x || 0;
+    this.bounds.y += y || 0;
+};
+
 EE.Sprite.prototype.setZ = function(z) {
     this.z_index = z;
     this.game._orderSpritesZIndex();
@@ -685,28 +690,44 @@ EE.Cursor.prototype._onMouseMove = function(event) {
 
 ;EE.KeyboardController = function(game) {
     this.game = game;
-    this._downKeys = [];
+    this._keys = [];
 
     window.addEventListener("keydown", this._onKeyDown.bind(this));
     window.addEventListener("keyup", this._onKeyUp.bind(this));
-}
+};
 
 EE.KeyboardController.prototype._onKeyDown = function(event) {
-    if(this.pressed(event.keyCode)) {
-        return;
+    var key = this._findKey(event.keyCode);
+    if(typeof key !== "undefined") {
+        key.down = true;
+    } else {
+        this._keys.push(new EE.KeyInfo(event.keyCode, true));
     }
-    this._downKeys[event.keyCode] = event.key;
-}
+};
+
+EE.KeyboardController.prototype._findKey = function(keycode) {
+    var key = this._keys.filter(function(keyinfo) {
+        return keyinfo.keycode == keycode;
+    });
+    return key[0];
+};
 
 EE.KeyboardController.prototype._onKeyUp = function(event) {
-    if(this.pressed(event.keyCode)) {
-        this._downKeys.splice(event.keyCode, 1);
-    }
-}
+    var key = this._findKey(event.keyCode);
+    if(typeof key !== "undefined") {
+        key.down = false;
+    } 
+};
 
 EE.KeyboardController.prototype.pressed = function(keyCode) {
-    return typeof(this._downKeys[keyCode]) !== "undefined";
-};EE.Keys = {
+    var key = this._findKey(keyCode);
+    return typeof key !== "undefined" && key.down;
+};
+
+EE.KeyInfo = function(keycode, down) {
+    this.keycode = keycode;
+    this.down = down;
+};;EE.Keys = {
     A: "A".charCodeAt(0),
     
     B: "B".charCodeAt(0),
@@ -1061,7 +1082,7 @@ EE.TiledMap.prototype.update = function(dt) {
     for(var j = 0; j < tmpArr.length; j++) {
         this.data.push(parseInt(tmpArr[j]));
     }
-    this.id = this.attrs.name || new EE.Guid.get();
+    this.id = this.attrs.name || new EE.Guid().get();
     this._img = null;
 
 };
@@ -1133,7 +1154,8 @@ EE.TiledMapLayer.prototype.render = function() {
         });
         this.map.game.getRenderer().drawImage(this._img, transformed.x, transformed.y, transformed.width, transformed.height);
     }
-};;EE.TiledMapTile = function(layer, img, sx, sy, sw, sh, x, y, w, h) {
+};
+;EE.TiledMapTile = function(layer, img, sx, sy, sw, sh, x, y, w, h) {
     this.layer = layer;
     this.img = img;
     this.sx = sx;

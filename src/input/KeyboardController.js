@@ -1,24 +1,40 @@
 EE.KeyboardController = function(game) {
     this.game = game;
-    this._downKeys = [];
+    this._keys = [];
 
     window.addEventListener("keydown", this._onKeyDown.bind(this));
     window.addEventListener("keyup", this._onKeyUp.bind(this));
-}
+};
 
 EE.KeyboardController.prototype._onKeyDown = function(event) {
-    if(this.pressed(event.keyCode)) {
-        return;
+    var key = this._findKey(event.keyCode);
+    if(typeof key !== "undefined") {
+        key.down = true;
+    } else {
+        this._keys.push(new EE.KeyInfo(event.keyCode, true));
     }
-    this._downKeys[event.keyCode] = event.key;
-}
+};
+
+EE.KeyboardController.prototype._findKey = function(keycode) {
+    var key = this._keys.filter(function(keyinfo) {
+        return keyinfo.keycode == keycode;
+    });
+    return key[0];
+};
 
 EE.KeyboardController.prototype._onKeyUp = function(event) {
-    if(this.pressed(event.keyCode)) {
-        this._downKeys.splice(event.keyCode, 1);
-    }
-}
+    var key = this._findKey(event.keyCode);
+    if(typeof key !== "undefined") {
+        key.down = false;
+    } 
+};
 
 EE.KeyboardController.prototype.pressed = function(keyCode) {
-    return typeof(this._downKeys[keyCode]) !== "undefined";
-}
+    var key = this._findKey(keyCode);
+    return typeof key !== "undefined" && key.down;
+};
+
+EE.KeyInfo = function(keycode, down) {
+    this.keycode = keycode;
+    this.down = down;
+};
