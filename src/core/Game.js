@@ -20,17 +20,11 @@ EE.Game = function(canvas, obj) {
     this._deltaTime = 0;
 };
 
-EE.Game.prototype._tryCall = function(callable) {
-    if(typeof callable === "function") {
-        (callable.bind(this))();
-    }
-};
-
 EE.Game.prototype._init = function() {
     this._canvas.addEventListener("mousedown", this._onClick.bind(this));
     this.cursor.init();
     this.addEntity(this._camera);
-    this._tryCall(this._scene.init);
+    EE.Utils.tryCall(this, this._scene.init);
     this._loader.init();
 };
 
@@ -49,14 +43,14 @@ EE.Game.prototype._update = function() {
     this._deltaTime = (now - this._lastFrameUpdate) / 1000;
     this._lastFrameUpdate = now;
 
-    this._tryCall(this._scene.preUpdate);
+    EE.Utils.tryCall(this, this._scene.preUpdate);
     this._quadtree.clear();
     for(var i = 0; i < this._entities.length; i++) {
         var ent_type = this._entities[i].type;
         if(typeof ent_type == "undefined" || ent_type == EE.EntityType.STATIC) {
                 continue;
         }
-        if(ent_type == EE.EntityType.ENTITY || ent_type == EE.EntityType.RENDERABLE ) {
+        if(ent_type == EE.EntityType.ENTITY || ent_type == EE.EntityType.RENDERABLE || ent_type == EE.EntityType.COLLIDABLE) {
             this._quadtree.insert(this._entities[i]);
         }
         
@@ -64,7 +58,7 @@ EE.Game.prototype._update = function() {
             this._entities[i].update(this._deltaTime);
         }
     }
-    this._tryCall(this._scene.update);
+    EE.Utils.tryCall(this, this._scene.update);
 };
 
 
@@ -72,14 +66,20 @@ EE.Game.prototype._render = function() {
     this._context.clearRect(0, 0, this._canvas.width, this._canvas.height);
     this._context.beginPath();
 
-    this._tryCall(this._scene.prerender);
+    EE.Utils.tryCall(this, this._scene.prerender);
 
-    var toRender = this.getEntitiesInBounds(this.getCamera().bounds);
-    for(var i = 0; i < toRender.length; i++) {
-        toRender[i].render();
+    var entities = this.getEntitiesInBounds(this.getCamera().bounds);
+    for(var i = 0; i < entities.length; i++) {
+        var ent_type = entities[i].type;
+
+        if(typeof ent_type == "undefined" || ent_type == EE.EntityType.COLLIDABLE) {
+            continue;
+        } 
+
+        entities[i].render();
     }
-    this._tryCall(this._scene.render);
-    this._tryCall(this._scene.postrender);
+    EE.Utils.tryCall(this, this._scene.render);
+    EE.Utils.tryCall(this, this._scene.postrender);
     this._context.closePath();
 };
 
@@ -114,8 +114,19 @@ EE.Game.prototype.loadTexture = function(id, src) {
 };
 
 EE.Game.prototype.addEntity = function(entity) {
+    if(typeof entity.type == "undefined") {
+        console.log(entity);
+        throw "Can't add an entity without a 'type' attribute defined";
+    }
     this._entities.push(entity);
     return entity;
+};
+
+EE.Game.prototype.addEntities = function(entities) {
+    Array.prototype.forEach.call(entities, function(entity) {
+        this.addEntity(entity);
+    }.bind(this));
+    return entities;
 };
 
 EE.Game.prototype.removeEntity = function(entity) {
@@ -162,6 +173,7 @@ EE.Game.prototype.getTexture = function(text_id) {
 
 EE.Game.prototype.getEntitiesInBounds = function(bounds, except) {
     var list = this._quadtree.retrieve(bounds);
+    
     if(typeof except !== "undefined") {
         return list.filter(function(item) {
             return item != except;

@@ -111,4 +111,4 @@ EE.Quadtree.prototype.retrieve = function(rect) {
     }
     
     return ret_obj;
-}
+};

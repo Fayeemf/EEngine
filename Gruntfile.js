@@ -2,9 +2,6 @@ module.exports = function(grunt) {
 
  grunt.initConfig({
     concat: {
-      options: {
-        separator: ';',
-      },
       dist: {
         src: ['src/ee.js', 'src/**/*.js'],
         dest: 'build/ee.js'

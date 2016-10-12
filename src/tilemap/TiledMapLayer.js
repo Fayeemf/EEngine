@@ -18,7 +18,7 @@ EE.TiledMapLayer = function(map, tileset, xmlNode) {
     }
     this.id = this.attrs.name || new EE.Guid().get();
     this._img = null;
-
+    this._collisionEnabled = false;
 };
 
 EE.TiledMapLayer.prototype.load = function() {
@@ -42,6 +42,7 @@ EE.TiledMapLayer.prototype.load = function() {
                 var height = parseInt(this.attrs.height);
 
                 for(var i = 0; i < this.data.length; i++) {
+                    if(this.data[i] === 0) continue;
                     var tileAmountWidth = imgWidth / tileWidth;
 
                     var y = Math.ceil(this.data[i] / tileAmountWidth) - 1;
@@ -84,10 +85,13 @@ EE.TiledMapLayer.prototype.enableCollision = function() {
     if(!this.loaded) {
         throw "Can't call enableCollision before the layer is loaded";
     }
-    return;
+    if(this._collisionEnabled) {
+        return;
+    }
+    this.map.game.addEntities(this.tiles);
 };
 
-EE.TiledMapLayer.prototype.render = function() {
+EE.TiledMapLayer.prototype.render = function(debug) {
     if(this.loaded && (this.attrs.visible != "false")) {
         var transformed = this.map.game._camera.toScreen(
         {
@@ -97,5 +101,10 @@ EE.TiledMapLayer.prototype.render = function() {
             height: this._img.height
         });
         this.map.game.getRenderer().drawImage(this._img, transformed.x, transformed.y, transformed.width, transformed.height);
+    }
+    if(debug) {
+        for(var i = 0; i < this.tiles.length; i++) {
+            this.tiles[i].render();
+        }
     }
 };

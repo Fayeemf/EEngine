@@ -8,8 +8,8 @@ EE.Animator = function(game, obj, path, speed) {
     if(typeof path != "undefined" && path) {
         this.addPath(path);
     }
-    this._init();
     this.type = EE.EntityType.UPDATABLE;
+    this._init();
 };
 
 EE.Animator.prototype._init = function() {

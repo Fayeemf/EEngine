@@ -6,10 +6,14 @@ EE.Sprite = function(game, text_id, x, y, width, height, z_index) {
     this.z_index = z_index || 0;
     this.visible = true;
     this.clickable = true;
+    this.components = [];
     this.type = EE.EntityType.ENTITY;
 };
 
 EE.Sprite.prototype.render = function() {
+    for(var i = 0; i < this.components.length; i++) {
+        EE.Utils.tryCall(this, this.components[i].render);
+    }
     if(!this.visible) {
         return;
     }
@@ -31,17 +35,16 @@ EE.Sprite.prototype.update = function(dt) {
             this._colliders[i].hit = false;
         }
     }
+    for(var i = 0; i < this.components.length; i++) {
+        EE.Utils.tryCall(this, this.components[i].update);
+    }
 };
 
-EE.Sprite.prototype._checkCollision = function(nextX, nextY) {
-    var bounds = {x: nextX, y: nextY, width: this.bounds.width, height: this.bounds.height};
-    var _nearObjs = game.getEntitiesInBounds(bounds, this);
-    for(var i = 0; i < _nearObjs.length; i++) {
-        if(EE.MathUtils.intersects(_nearObjs[i].bounds, bounds)) {
-            return true;
-        }
-    }
-    return false;
+EE.Sprite.prototype.addComponent = function(component) {
+    instance = typeof component == "function" ? new (Function.prototype.bind.apply(component, arguments)) : component;
+    this.components.push(instance);
+    EE.Utils.tryCall(this, instance.init);
+    return instance;
 };
 
 EE.Sprite.prototype.moveTo = function(x, y) {
@@ -92,3 +95,38 @@ EE.Sprite.prototype.intersects = function(other) {
 EE.Sprite.prototype.contains = function(other) {
     return EE.MathUtils.contains(this.bounds, other.bounds);
 };
+
+EE.Sprite.prototype._checkCollision = function(nextX, nextY) {
+    var bounds = {x: nextX, y: nextY, width: this.bounds.width, height: this.bounds.height};
+    var _nearObjs = game.getEntitiesInBounds(bounds, this);
+    for(var i = 0; i < _nearObjs.length; i++) {
+        if(EE.MathUtils.intersects(_nearObjs[i].bounds, bounds)) {
+            return true;
+        }
+    }
+    return false;
+};
+
+Object.defineProperty(EE.Sprite.prototype, "x", {
+    get: function(){
+        return this.bounds.x;
+    },
+    set: function(x) {
+        if(isNaN(x)) {
+            throw "Can only assign a number to property x !";
+        }
+        this.bounds.x = x;
+    }
+});
+
+Object.defineProperty(EE.Sprite.prototype, "y", {
+    get: function(){
+        return this.bounds.y;
+    },
+    set: function(y) {
+        if(isNaN(y)) {
+            throw "Can only assign a number to property x !";
+        }
+        this.bounds.y = y;
+    }
+});

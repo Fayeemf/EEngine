@@ -28,6 +28,7 @@ function init() {
         bg_layer = map.getLayer("backgroundLayer");
         top_layer = map.getLayer("objectsLayer");
         col_layer = map.getLayer("collisionLayer");
+        col_layer.enableCollision();
 
         var bunny_animator = new EE.Animator(game, spr);
         game.click(function(event) {
@@ -50,18 +51,20 @@ function render() {
     
 }
 
+var speed = 5;
+
 function update() {
     if(game.isDown(EE.Keys.UP)) {
-        spr.moveOffset(0, -10);
+        spr.moveOffset(0, -speed);
     }
     if(game.isDown(EE.Keys.DOWN)) {
-        spr.moveOffset(0, 10);
+        spr.moveOffset(0, speed);
     }
     if(game.isDown(EE.Keys.LEFT)) {
-        spr.moveOffset(-10, 0);
+        spr.moveOffset(-speed, 0);
     }
     if(game.isDown(EE.Keys.RIGHT)) {
-        spr.moveOffset(10, 0);
+        spr.moveOffset(speed, 0);
     }
 }
 
