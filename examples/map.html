@@ -12,7 +12,7 @@
 var game = new EE.Game(document.getElementById("canvas"), {init: init, update: update, prerender: prerender, render:render});
 var spr;
 var map;
-var bg_layer, top_layer;
+var bg_layer, top_layer, collision_layer;
 
 function init() {
     game.loadTexture("bunny", "res/bunny.png");
@@ -27,6 +27,7 @@ function init() {
         
         bg_layer = map.getLayer("backgroundLayer");
         top_layer = map.getLayer("objectsLayer");
+        col_layer = map.getLayer("collisionLayer");
 
         var bunny_animator = new EE.Animator(game, spr);
         game.click(function(event) {
@@ -34,6 +35,7 @@ function init() {
             bunny_animator.lerpTo(pos);
         });
     });
+    
     map.init();
 }
 
@@ -49,7 +51,18 @@ function render() {
 }
 
 function update() {
-
+    if(game.isDown(EE.Keys.UP)) {
+        spr.moveOffset(0, -10);
+    }
+    if(game.isDown(EE.Keys.DOWN)) {
+        spr.moveOffset(0, 10);
+    }
+    if(game.isDown(EE.Keys.LEFT)) {
+        spr.moveOffset(-10, 0);
+    }
+    if(game.isDown(EE.Keys.RIGHT)) {
+        spr.moveOffset(10, 0);
+    }
 }
 
 game.run();

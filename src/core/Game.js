@@ -8,13 +8,10 @@ EE.Game = function(canvas, obj) {
 
     this._loader = new EE.Loader();
     this._canvas = canvas;
-    this._framerate = 60;
     this._context = this._canvas.getContext("2d");
     this._scene = typeof obj == "function" ? new obj() : obj; 
     this._click_listeners = [];
     this._entities = [];
-    this._updatables = [];
-    this._renderables = [];
     this._quadtree = new EE.Quadtree(this, 0, new EE.Rect(0, 0, this.worldWidth, this.worldHeight));
     this._camera = new EE.Camera(this, 0, 0, 1);
     this._renderer = new EE.GraphicRenderer(this);
@@ -32,7 +29,7 @@ EE.Game.prototype._tryCall = function(callable) {
 EE.Game.prototype._init = function() {
     this._canvas.addEventListener("mousedown", this._onClick.bind(this));
     this.cursor.init();
-    this.addUpdatable(this._camera);
+    this.addEntity(this._camera);
     this._tryCall(this._scene.init);
     this._loader.init();
 };
@@ -55,14 +52,17 @@ EE.Game.prototype._update = function() {
     this._tryCall(this._scene.preUpdate);
     this._quadtree.clear();
     for(var i = 0; i < this._entities.length; i++) {
-        this._quadtree.insert(this._entities[i]);
-        this._entities[i].update(this._deltaTime);
-    }
-    for(var i = 0; i < this._renderables.length; i++) {
-        this._quadtree.insert(this._renderables[i]);
-    }
-    for(var i = 0; i < this._updatables.length; i++) {
-        this._updatables[i].update(this._deltaTime);
+        var ent_type = this._entities[i].type;
+        if(typeof ent_type == "undefined" || ent_type == EE.EntityType.STATIC) {
+                continue;
+        }
+        if(ent_type == EE.EntityType.ENTITY || ent_type == EE.EntityType.RENDERABLE ) {
+            this._quadtree.insert(this._entities[i]);
+        }
+        
+        if(ent_type == EE.EntityType.UPDATABLE || ent_type == EE.EntityType.ENTITY) {
+            this._entities[i].update(this._deltaTime);
+        }
     }
     this._tryCall(this._scene.update);
 };
@@ -86,9 +86,7 @@ EE.Game.prototype._render = function() {
 EE.Game.prototype._loop = function() {
     this._update();
     this._render();
-    setTimeout(() => {
-        window.requestAnimationFrame(this._loop.bind(this));
-    }, 1000 / this._framerate);
+    window.requestAnimationFrame(this._loop.bind(this));
 };
 
 EE.Game.prototype._orderEntitiesZIndex = function() {
@@ -120,34 +118,10 @@ EE.Game.prototype.addEntity = function(entity) {
     return entity;
 };
 
-EE.Game.prototype.addUpdatable = function(updatable) {
-    this._updatables.push(updatable);
-    return updatable;
-};
-
-EE.Game.prototype.addRenderable = function(renderable) {
-    this._renderables.push(renderable);
-    return renderable;
-};
-
 EE.Game.prototype.removeEntity = function(entity) {
     var i = this._entities.indexOf(entity);
     if(i !== -1) {
         this._entities.splice(i, 1);
-    }
-};
-
-EE.Game.prototype.removeUpdatable = function(entity) {
-    var i = this._updatables.indexOf(entity);
-    if(i !== -1) {
-        this._updatables.splice(i, 1);
-    }
-};
-
-EE.Game.prototype.removeRenderable = function(entity) {
-    var i = this._renderables.indexOf(entity);
-    if(i !== -1) {
-        this._renderables.splice(i, 1);
     }
 };
 
@@ -186,8 +160,13 @@ EE.Game.prototype.getTexture = function(text_id) {
     return this._loader.getTexture(text_id);
 };
 
-EE.Game.prototype.getEntitiesInBounds = function(bounds) {
+EE.Game.prototype.getEntitiesInBounds = function(bounds, except) {
     var list = this._quadtree.retrieve(bounds);
+    if(typeof except !== "undefined") {
+        return list.filter(function(item) {
+            return item != except;
+        });
+    }
     return list;
 };
 

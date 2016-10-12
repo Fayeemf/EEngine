@@ -7,6 +7,7 @@ EE.Camera = function(game, x, y, scale) {
 
     this._followPath = [];
     this._limit = null;
+    this.type = EE.EntityType.UPDATABLE;
 };
 
 EE.Camera.prototype.update = function(dt) {

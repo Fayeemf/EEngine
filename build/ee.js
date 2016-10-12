@@ -11,10 +11,11 @@ var EE = {
         this.addPath(path);
     }
     this._init();
-}
+    this.type = EE.EntityType.UPDATABLE;
+};
 
 EE.Animator.prototype._init = function() {
-    this.game.addUpdatable(this);
+    this.game.addEntity(this);
 }
 
 EE.Animator.prototype.update = function(dt) {
@@ -78,6 +79,7 @@ EE.Animator.prototype.stop = function() {
 
     this._followPath = [];
     this._limit = null;
+    this.type = EE.EntityType.UPDATABLE;
 };
 
 EE.Camera.prototype.update = function(dt) {
@@ -144,6 +146,11 @@ EE.Camera.prototype.toScreenPoint = function(point) {
 EE.Camera.prototype.toWorldPoint = function(point) {
     var pos = this.toWorld({x:point.x, y:point.y, width:0, height:0});
     return {x:pos.x, y:pos.y};
+};;EE.EntityType = {
+    UPDATABLE: 0,
+    RENDERABLE: 1,
+    ENTITY: 2,
+    STATIC: 3,
 };;EE.Game = function(canvas, obj) {
     this.clientWidth = canvas.width;
     this.clientHeight = canvas.height;
@@ -154,13 +161,10 @@ EE.Camera.prototype.toWorldPoint = function(point) {
 
     this._loader = new EE.Loader();
     this._canvas = canvas;
-    this._framerate = 60;
     this._context = this._canvas.getContext("2d");
     this._scene = typeof obj == "function" ? new obj() : obj; 
     this._click_listeners = [];
     this._entities = [];
-    this._updatables = [];
-    this._renderables = [];
     this._quadtree = new EE.Quadtree(this, 0, new EE.Rect(0, 0, this.worldWidth, this.worldHeight));
     this._camera = new EE.Camera(this, 0, 0, 1);
     this._renderer = new EE.GraphicRenderer(this);
@@ -178,7 +182,7 @@ EE.Game.prototype._tryCall = function(callable) {
 EE.Game.prototype._init = function() {
     this._canvas.addEventListener("mousedown", this._onClick.bind(this));
     this.cursor.init();
-    this.addUpdatable(this._camera);
+    this.addEntity(this._camera);
     this._tryCall(this._scene.init);
     this._loader.init();
 };
@@ -201,14 +205,17 @@ EE.Game.prototype._update = function() {
     this._tryCall(this._scene.preUpdate);
     this._quadtree.clear();
     for(var i = 0; i < this._entities.length; i++) {
-        this._quadtree.insert(this._entities[i]);
-        this._entities[i].update(this._deltaTime);
-    }
-    for(var i = 0; i < this._renderables.length; i++) {
-        this._quadtree.insert(this._renderables[i]);
-    }
-    for(var i = 0; i < this._updatables.length; i++) {
-        this._updatables[i].update(this._deltaTime);
+        var ent_type = this._entities[i].type;
+        if(typeof ent_type == "undefined" || ent_type == EE.EntityType.STATIC) {
+                continue;
+        }
+        if(ent_type == EE.EntityType.ENTITY || ent_type == EE.EntityType.RENDERABLE ) {
+            this._quadtree.insert(this._entities[i]);
+        }
+        
+        if(ent_type == EE.EntityType.UPDATABLE || ent_type == EE.EntityType.ENTITY) {
+            this._entities[i].update(this._deltaTime);
+        }
     }
     this._tryCall(this._scene.update);
 };
@@ -232,9 +239,7 @@ EE.Game.prototype._render = function() {
 EE.Game.prototype._loop = function() {
     this._update();
     this._render();
-    setTimeout(() => {
-        window.requestAnimationFrame(this._loop.bind(this));
-    }, 1000 / this._framerate);
+    window.requestAnimationFrame(this._loop.bind(this));
 };
 
 EE.Game.prototype._orderEntitiesZIndex = function() {
@@ -266,34 +271,10 @@ EE.Game.prototype.addEntity = function(entity) {
     return entity;
 };
 
-EE.Game.prototype.addUpdatable = function(updatable) {
-    this._updatables.push(updatable);
-    return updatable;
-};
-
-EE.Game.prototype.addRenderable = function(renderable) {
-    this._renderables.push(renderable);
-    return renderable;
-};
-
 EE.Game.prototype.removeEntity = function(entity) {
     var i = this._entities.indexOf(entity);
     if(i !== -1) {
         this._entities.splice(i, 1);
-    }
-};
-
-EE.Game.prototype.removeUpdatable = function(entity) {
-    var i = this._updatables.indexOf(entity);
-    if(i !== -1) {
-        this._updatables.splice(i, 1);
-    }
-};
-
-EE.Game.prototype.removeRenderable = function(entity) {
-    var i = this._renderables.indexOf(entity);
-    if(i !== -1) {
-        this._renderables.splice(i, 1);
     }
 };
 
@@ -332,8 +313,13 @@ EE.Game.prototype.getTexture = function(text_id) {
     return this._loader.getTexture(text_id);
 };
 
-EE.Game.prototype.getEntitiesInBounds = function(bounds) {
+EE.Game.prototype.getEntitiesInBounds = function(bounds, except) {
     var list = this._quadtree.retrieve(bounds);
+    if(typeof except !== "undefined") {
+        return list.filter(function(item) {
+            return item != except;
+        });
+    }
     return list;
 };
 
@@ -536,23 +522,23 @@ EE.Quadtree.prototype.retrieve = function(rect) {
     this.y = y;
     this.width = width;
     this.height = height;
-}
+};
 
 EE.Rect.prototype.left = function() {
     return this.x;
-}
+};
 
 EE.Rect.prototype.right = function() {
     return this.x + this.width;
-}
+};
 
 EE.Rect.prototype.bottom = function() {
     return this.y + this.height;
-}
+};
 
 EE.Rect.prototype.top = function() {
     return this.y;
-};EE.Vector2 = function(x, y) {
+};;EE.Vector2 = function(x, y) {
     this.x = x;
     this.y = y;
 }
@@ -565,33 +551,33 @@ EE.Vector2.lerp = function(a, b, amt) {
     this.game = game;
     this.default_stroke_color = "black";
     this.default_fill_color = "black";
-}
+};
 
 EE.GraphicRenderer.prototype.drawImage = function(src, x, y, width, height) {
     this.game._context.drawImage(src, x, y, width, height);
-}
+};
 
 EE.GraphicRenderer.prototype.drawImagePart = function(src,sx,sy,swidth,sheight,x,y,width,height) {
     this.game._context.drawImage(src, sx,sy,swidth,sheight,x,y,width,height);
-}
+};
 
 EE.GraphicRenderer.prototype.drawRectangle = function(x, y, width, height, color) {
     this.game._context.save();
     this.game._context.strokeStyle = color || this.default_stroke_color;
     this.game._context.strokeRect(x, y, width, height);
     this.game._context.restore();
-}
+};
 
 EE.GraphicRenderer.prototype.fillRectangle = function(x, y, width, height, color) {
     this.game._context.save();
     this.game._context.fillStyle = color || this.default_fill_color;
     this.game._context.fillRect(x, y, width, height);
     this.game._context.restore();
-}
+};
 
 EE.GraphicRenderer.prototype.drawString = function(txt, x, y) {
     // TODO : implementation
-};EE.Sprite = function(game, text_id, x, y, width, height, z_index) {
+};;EE.Sprite = function(game, text_id, x, y, width, height, z_index) {
     this.game = game;
     this.text_id = text_id;
     this.bounds = new EE.Rect(x, y, width, height);
@@ -599,6 +585,7 @@ EE.GraphicRenderer.prototype.drawString = function(txt, x, y) {
     this.z_index = z_index || 0;
     this.visible = true;
     this.clickable = true;
+    this.type = EE.EntityType.ENTITY;
 };
 
 EE.Sprite.prototype.render = function() {
@@ -625,14 +612,33 @@ EE.Sprite.prototype.update = function(dt) {
     }
 };
 
+EE.Sprite.prototype._checkCollision = function(nextX, nextY) {
+    var bounds = {x: nextX, y: nextY, width: this.bounds.width, height: this.bounds.height};
+    var _nearObjs = game.getEntitiesInBounds(bounds, this);
+    for(var i = 0; i < _nearObjs.length; i++) {
+        if(EE.MathUtils.intersects(_nearObjs[i].bounds, bounds)) {
+            return true;
+        }
+    }
+    return false;
+};
+
 EE.Sprite.prototype.moveTo = function(x, y) {
+    if(this._checkCollision(x, y)) {
+        return;
+    }
     this.bounds.x = x;
     this.bounds.y = y;
 };
 
 EE.Sprite.prototype.moveOffset = function(x, y) {
-    this.bounds.x += x || 0;
-    this.bounds.y += y || 0;
+    var nX = this.bounds.x + (x || 0);
+    var nY = this.bounds.y + (y || 0);
+    if(this._checkCollision(nX, nY)) {
+        return;
+    }
+    this.bounds.x = nX;
+    this.bounds.y = nY;
 };
 
 EE.Sprite.prototype.setZ = function(z) {
@@ -652,41 +658,36 @@ EE.Sprite.prototype.collide = function(other, callback) {
 
 EE.Sprite.prototype.click = function(callback) {
     this.game._addClickListener((event) => {
-        if(this.contains(this.game.getCamera().toWorldPoint({x: event.offsetX, y: event.offsetY})) && this.clickable){
+        if(EE.MathUtils.contains(this.bounds, this.game.getCamera().toWorldPoint({x: event.offsetX, y: event.offsetY})) && this.clickable){
             callback();
         }
     });
 };
 
 EE.Sprite.prototype.intersects = function(other) {
-    return !(other.bounds.left() > this.bounds.right() || 
-        other.bounds.right() < this.bounds.left() || 
-        other.bounds.top() > this.bounds.bottom() ||
-        other.bounds.bottom() < this.bounds.top());
+    return EE.MathUtils.intersects(this.bounds, other.bounds);
 };
 
-EE.Sprite.prototype.contains = function(p) {
-    return (this.bounds.x < p.x && this.bounds.y < p.y &&
-            this.bounds.x + this.bounds.width > p.x  &&
-            this.bounds.y + this.bounds.height > p.y);
+EE.Sprite.prototype.contains = function(other) {
+    return EE.MathUtils.contains(this.bounds, other.bounds);
 };;EE.Texture = function(id, src) {
     this.id = id;
     this.src = src;
-};EE.Cursor = function(game) {
+};;EE.Cursor = function(game) {
     this.game = game;
     this.x = 0;
     this.y = 0;
-}
+};
 
 EE.Cursor.prototype.init = function() {
     this.game._canvas.addEventListener("mousemove", this._onMouseMove.bind(this));
-}
+};
 
 EE.Cursor.prototype._onMouseMove = function(event) {
     var rect = canvas.getBoundingClientRect();
     this.x = event.clientX - rect.left,
     this.y = event.clientY - rect.top
-}
+};
 
 ;EE.KeyboardController = function(game) {
     this.game = game;
@@ -935,21 +936,18 @@ EE.KeyInfo = function(keycode, down) {
     this.game = game;
     this.bounds = bounds;
     this.color = color;
-}
+    this.type = EE.EntityType.RENDERABLE;
+};
 
 EE.Box.prototype.render = function() {
     var transformed = this.game._camera.toScreen(this.bounds);
     this.game._renderer.drawRectangle(transformed.x, transformed.y, transformed.width, transformed.height, this.color);
-}
-
-EE.Box.prototype.update = function(dt) {
-    return;
-}
+};
 
 EE.Box.prototype.setColor = function(color) {
     // TODO : Input validation for color
     this.color = color;
-};function parseConfig(xml, config) {
+};;function parseConfig(xml, config) {
     var attrs = {};
     for(var i = 0; i < config.length; i++) {
         var attr = config[i];
@@ -973,6 +971,8 @@ EE.TiledMap = function(game, src, scale) {
     this.attrs = [];
     this.tilesets = [];
     this.bounds = null;
+    this.properties = [];
+    this.xml = null;
 };
 
 EE.TiledMap.prototype.init = function() {
@@ -1001,7 +1001,7 @@ EE.TiledMap.prototype._loaded = function(xhr, resolve) {
     var resp = xhr.responseText;
     var parser = new DOMParser();
     var xmlDoc = parser.parseFromString(resp, "text/xml");
-
+    this.xml = xmlDoc;
     this.attrs = parseConfig(xmlDoc.getElementsByTagName("map")[0], this.conf);
     var tilesetsXml = xmlDoc.getElementsByTagName("tileset");
     for(var i = 0; i < tilesetsXml.length; i++) {
@@ -1027,13 +1027,12 @@ EE.TiledMap.prototype._loaded = function(xhr, resolve) {
     var tH = parseInt(this.attrs.tileheight);
 
     this.bounds = new EE.Rect(x, y, w * tW * this.scale, h * tH * this.scale);
-
-    if(this._loadcb) {
-        this._loadcb(resp);
-    }
-
+    this._getProperties();
     Promise.all(promises).then(() => {
-        resolve("map loaded ! ");
+        resolve("success");
+        if(this._loadcb) {
+            this._loadcb(resp);
+        }
     });
 };
 
@@ -1055,8 +1054,16 @@ EE.TiledMap.prototype.render = function() {
     } 
 };
 
-EE.TiledMap.prototype.update = function(dt) {
-
+EE.TiledMap.prototype._getProperties = function() {
+    var tiles = this.xml.getElementsByTagName("tile");
+    for(var i = 0; i < tiles.length; i++) {
+        var properties = tiles[i].getElementsByTagName("property");
+        for(var j = 0; j < properties.length; j++) {
+            var prop_name = properties[j].getAttribute("name");
+            var prop_value = properties[j].getAttribute("value");
+            this.properties.push({id: tiles[i].getAttribute("id"), name: prop_name, value: prop_value});
+        }
+    }
 };;EE.TiledMapImage = function(map, tileset, xmlNode) {
     this.map = map;
     this.xml = xmlNode;
@@ -1093,7 +1100,6 @@ EE.TiledMapLayer.prototype.load = function() {
             var img = new Image();
             img.src = this.tileset.image.attrs.source;
             img.onload = () => {
-                this.loaded = true;
                 this.map.game.loadTexture(this.id, this.tileset.image.attrs.source);
 
                 var tileWidth = parseInt(this.tileset.attrs.tilewidth);
@@ -1117,11 +1123,12 @@ EE.TiledMapLayer.prototype.load = function() {
                                         Math.ceil(y * tileHeight), tileWidth, tileHeight, 
                                         (Math.floor(i%width) * tileWidth * this.map.scale),
                                         (Math.floor(i/width) * tileHeight * this.map.scale),
-                                        tileWidth * this.map.scale,  tileHeight * this.map.scale);
+                                        tileWidth * this.map.scale,  tileHeight * this.map.scale, this.data[i]);
                     this.tiles.push(tile);
                 }
-                resolve("layer loaded");
+                this.loaded = true;
                 this._create_tile();
+                resolve("layer loaded");
             };
         } catch(e) {
             reject("Error during loading of the layer");
@@ -1134,13 +1141,23 @@ EE.TiledMapLayer.prototype._create_tile = function() {
     canvas.width = this.map.bounds.width;
     canvas.height = this.map.bounds.height;
 
+    var img_ids = [];
+    var ctx = canvas.getContext("2d");
     for(var i = 0; i < this.tiles.length; i++) {
         var tile = this.tiles[i];
-        canvas.getContext("2d").drawImage(tile.toImage(), tile.bounds.x, tile.bounds.y, tile.bounds.width, tile.bounds.height);
+        ctx.drawImage(tile.img, tile.sx, tile.sy, tile.sw, tile.sh, tile.bounds.x, tile.bounds.y, tile.bounds.width, tile.bounds.height);
     }
+
     this._img = new Image();
     this._img.setAttribute('crossOrigin', 'anonymous');
     this._img.src = canvas.toDataURL("image/png");
+};
+
+EE.TiledMapLayer.prototype.enableCollision = function() {
+    if(!this.loaded) {
+        throw "Can't call enableCollision before the layer is loaded";
+    }
+    return;
 };
 
 EE.TiledMapLayer.prototype.render = function() {
@@ -1155,7 +1172,7 @@ EE.TiledMapLayer.prototype.render = function() {
         this.map.game.getRenderer().drawImage(this._img, transformed.x, transformed.y, transformed.width, transformed.height);
     }
 };
-;EE.TiledMapTile = function(layer, img, sx, sy, sw, sh, x, y, w, h) {
+;EE.TiledMapTile = function(layer, img, sx, sy, sw, sh, x, y, w, h, id) {
     this.layer = layer;
     this.img = img;
     this.sx = sx;
@@ -1163,31 +1180,20 @@ EE.TiledMapLayer.prototype.render = function() {
     this.sw = sw;
     this.sh = sh;
     this.bounds = new EE.Rect(x, y, w, h);
-};
-
-EE.TiledMapTile.prototype.toImage = function() {
-    var canvas = document.createElement("canvas");
-    canvas.width = this.bounds.width;
-    canvas.height = this.bounds.height;
-    canvas.getContext("2d").drawImage(
-        this.img, 
-        this.sx,
-        this.sy, 
-        this.sw, 
-        this.sh,
-        0,
-        0,
-        this.bounds.width,
-        this.bounds.height
-    );
-    var _img = new Image();
-    _img.setAttribute('crossOrigin', 'anonymous');
-    _img.src = canvas.toDataURL("image/png");
-    return _img;
+    this.id = id;
+    this.type = EE.EntityType.STATIC;
 };
 
 EE.TiledMapTile.prototype.update = function(dt) {
 
+};
+
+EE.TiledMapTile.prototype.render = function(dt) {
+
+};
+
+EE.TiledMapTile.prototype.getProperty = function(prop_name) {
+    return this.layer.map.properties[prop_name];
 };
 ;EE.TiledMapTileset = function(map, xmlNode) {
     this.map = map;
@@ -1209,22 +1215,38 @@ EE.Guid.prototype.get = function() {
   return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
     s4() + '-' + s4() + s4() + s4();
 }
-;EE.Timer = function(game, delay, callback, repeat, interval) {
+;EE.MathUtils = function() {
+
+};
+
+EE.MathUtils.contains = function(a, b) {
+    return (a.x < b.x && a.y < b.y &&
+            a.x + a.width > b.x  &&
+            a.y + a.height > b.y);
+};
+
+EE.MathUtils.intersects = function(a, b) {
+    return !(b.x > (a.x + a.width) || 
+        (b.x + b.width) < a.x || 
+        b.y > (a.y + a.height) ||
+        (b.y + b.height) < a.y);
+};;EE.Timer = function(game, delay, callback, repeat, interval) {
     this.delay = (delay >= 1 ? delay : 0);
     this.callback = callback;
     this.repeat = repeat || false;
     this.interval = interval || this.delay;
     this.stopped = false;
     this.game = game;
+    this.type = EE.EntityType.UPDATABLE;
 
     this._start_time = new Date();
-    this._next_tick = new Date()
+    this._next_tick = new Date();
     this._next_tick.setSeconds(this._next_tick.getSeconds() + (delay / 1000));
 };
 
 EE.Timer.prototype.start = function() {
-    this.game.addUpdatable(this);
-}
+    this.game.addEntity(this);
+};
 
 EE.Timer.prototype.update = function() {
     if(this.stopped) {
@@ -1244,5 +1266,5 @@ EE.Timer.prototype.update = function() {
 
 EE.Timer.prototype.stop = function() {
     this.stopped = true;
-    this.game.removeUpdatable(this);
+    this.game.removeEntity(this);
 };

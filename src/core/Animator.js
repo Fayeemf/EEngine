@@ -9,10 +9,11 @@ EE.Animator = function(game, obj, path, speed) {
         this.addPath(path);
     }
     this._init();
-}
+    this.type = EE.EntityType.UPDATABLE;
+};
 
 EE.Animator.prototype._init = function() {
-    this.game.addUpdatable(this);
+    this.game.addEntity(this);
 }
 
 EE.Animator.prototype.update = function(dt) {

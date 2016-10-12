@@ -6,6 +6,7 @@ EE.Sprite = function(game, text_id, x, y, width, height, z_index) {
     this.z_index = z_index || 0;
     this.visible = true;
     this.clickable = true;
+    this.type = EE.EntityType.ENTITY;
 };
 
 EE.Sprite.prototype.render = function() {
@@ -32,14 +33,33 @@ EE.Sprite.prototype.update = function(dt) {
     }
 };
 
+EE.Sprite.prototype._checkCollision = function(nextX, nextY) {
+    var bounds = {x: nextX, y: nextY, width: this.bounds.width, height: this.bounds.height};
+    var _nearObjs = game.getEntitiesInBounds(bounds, this);
+    for(var i = 0; i < _nearObjs.length; i++) {
+        if(EE.MathUtils.intersects(_nearObjs[i].bounds, bounds)) {
+            return true;
+        }
+    }
+    return false;
+};
+
 EE.Sprite.prototype.moveTo = function(x, y) {
+    if(this._checkCollision(x, y)) {
+        return;
+    }
     this.bounds.x = x;
     this.bounds.y = y;
 };
 
 EE.Sprite.prototype.moveOffset = function(x, y) {
-    this.bounds.x += x || 0;
-    this.bounds.y += y || 0;
+    var nX = this.bounds.x + (x || 0);
+    var nY = this.bounds.y + (y || 0);
+    if(this._checkCollision(nX, nY)) {
+        return;
+    }
+    this.bounds.x = nX;
+    this.bounds.y = nY;
 };
 
 EE.Sprite.prototype.setZ = function(z) {
@@ -59,21 +79,16 @@ EE.Sprite.prototype.collide = function(other, callback) {
 
 EE.Sprite.prototype.click = function(callback) {
     this.game._addClickListener((event) => {
-        if(this.contains(this.game.getCamera().toWorldPoint({x: event.offsetX, y: event.offsetY})) && this.clickable){
+        if(EE.MathUtils.contains(this.bounds, this.game.getCamera().toWorldPoint({x: event.offsetX, y: event.offsetY})) && this.clickable){
             callback();
         }
     });
 };
 
 EE.Sprite.prototype.intersects = function(other) {
-    return !(other.bounds.left() > this.bounds.right() || 
-        other.bounds.right() < this.bounds.left() || 
-        other.bounds.top() > this.bounds.bottom() ||
-        other.bounds.bottom() < this.bounds.top());
+    return EE.MathUtils.intersects(this.bounds, other.bounds);
 };
 
-EE.Sprite.prototype.contains = function(p) {
-    return (this.bounds.x < p.x && this.bounds.y < p.y &&
-            this.bounds.x + this.bounds.width > p.x  &&
-            this.bounds.y + this.bounds.height > p.y);
+EE.Sprite.prototype.contains = function(other) {
+    return EE.MathUtils.contains(this.bounds, other.bounds);
 };

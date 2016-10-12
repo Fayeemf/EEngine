@@ -17,7 +17,7 @@ function init() {
     game.setBackground("lightGray");
     
     spr = game.addSprite("bunny", game.clientWidth / 2 - 35, game.clientHeight / 2 - 35, 70, 70);
-    var animator = new EE.Animator(game, spr);
+    var animator = new EE.Animator(game, spr, null, 10);
     spr.click(() => {
         console.log("clicked");
         animator.lerpTo({x: 0, y:0}, () => {

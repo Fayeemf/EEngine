@@ -5,15 +5,16 @@ EE.Timer = function(game, delay, callback, repeat, interval) {
     this.interval = interval || this.delay;
     this.stopped = false;
     this.game = game;
+    this.type = EE.EntityType.UPDATABLE;
 
     this._start_time = new Date();
-    this._next_tick = new Date()
+    this._next_tick = new Date();
     this._next_tick.setSeconds(this._next_tick.getSeconds() + (delay / 1000));
 };
 
 EE.Timer.prototype.start = function() {
-    this.game.addUpdatable(this);
-}
+    this.game.addEntity(this);
+};
 
 EE.Timer.prototype.update = function() {
     if(this.stopped) {
@@ -33,5 +34,5 @@ EE.Timer.prototype.update = function() {
 
 EE.Timer.prototype.stop = function() {
     this.stopped = true;
-    this.game.removeUpdatable(this);
+    this.game.removeEntity(this);
 };

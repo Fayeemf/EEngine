@@ -22,6 +22,8 @@ EE.TiledMap = function(game, src, scale) {
     this.attrs = [];
     this.tilesets = [];
     this.bounds = null;
+    this.properties = [];
+    this.xml = null;
 };
 
 EE.TiledMap.prototype.init = function() {
@@ -50,7 +52,7 @@ EE.TiledMap.prototype._loaded = function(xhr, resolve) {
     var resp = xhr.responseText;
     var parser = new DOMParser();
     var xmlDoc = parser.parseFromString(resp, "text/xml");
-
+    this.xml = xmlDoc;
     this.attrs = parseConfig(xmlDoc.getElementsByTagName("map")[0], this.conf);
     var tilesetsXml = xmlDoc.getElementsByTagName("tileset");
     for(var i = 0; i < tilesetsXml.length; i++) {
@@ -76,13 +78,12 @@ EE.TiledMap.prototype._loaded = function(xhr, resolve) {
     var tH = parseInt(this.attrs.tileheight);
 
     this.bounds = new EE.Rect(x, y, w * tW * this.scale, h * tH * this.scale);
-
-    if(this._loadcb) {
-        this._loadcb(resp);
-    }
-
+    this._getProperties();
     Promise.all(promises).then(() => {
-        resolve("map loaded ! ");
+        resolve("success");
+        if(this._loadcb) {
+            this._loadcb(resp);
+        }
     });
 };
 
@@ -104,6 +105,14 @@ EE.TiledMap.prototype.render = function() {
     } 
 };
 
-EE.TiledMap.prototype.update = function(dt) {
-
+EE.TiledMap.prototype._getProperties = function() {
+    var tiles = this.xml.getElementsByTagName("tile");
+    for(var i = 0; i < tiles.length; i++) {
+        var properties = tiles[i].getElementsByTagName("property");
+        for(var j = 0; j < properties.length; j++) {
+            var prop_name = properties[j].getAttribute("name");
+            var prop_value = properties[j].getAttribute("value");
+            this.properties.push({id: tiles[i].getAttribute("id"), name: prop_name, value: prop_value});
+        }
+    }
 };

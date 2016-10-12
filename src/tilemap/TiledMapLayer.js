@@ -27,7 +27,6 @@ EE.TiledMapLayer.prototype.load = function() {
             var img = new Image();
             img.src = this.tileset.image.attrs.source;
             img.onload = () => {
-                this.loaded = true;
                 this.map.game.loadTexture(this.id, this.tileset.image.attrs.source);
 
                 var tileWidth = parseInt(this.tileset.attrs.tilewidth);
@@ -51,11 +50,12 @@ EE.TiledMapLayer.prototype.load = function() {
                                         Math.ceil(y * tileHeight), tileWidth, tileHeight, 
                                         (Math.floor(i%width) * tileWidth * this.map.scale),
                                         (Math.floor(i/width) * tileHeight * this.map.scale),
-                                        tileWidth * this.map.scale,  tileHeight * this.map.scale);
+                                        tileWidth * this.map.scale,  tileHeight * this.map.scale, this.data[i]);
                     this.tiles.push(tile);
                 }
-                resolve("layer loaded");
+                this.loaded = true;
                 this._create_tile();
+                resolve("layer loaded");
             };
         } catch(e) {
             reject("Error during loading of the layer");
@@ -68,13 +68,23 @@ EE.TiledMapLayer.prototype._create_tile = function() {
     canvas.width = this.map.bounds.width;
     canvas.height = this.map.bounds.height;
 
+    var img_ids = [];
+    var ctx = canvas.getContext("2d");
     for(var i = 0; i < this.tiles.length; i++) {
         var tile = this.tiles[i];
-        canvas.getContext("2d").drawImage(tile.toImage(), tile.bounds.x, tile.bounds.y, tile.bounds.width, tile.bounds.height);
+        ctx.drawImage(tile.img, tile.sx, tile.sy, tile.sw, tile.sh, tile.bounds.x, tile.bounds.y, tile.bounds.width, tile.bounds.height);
     }
+
     this._img = new Image();
     this._img.setAttribute('crossOrigin', 'anonymous');
     this._img.src = canvas.toDataURL("image/png");
+};
+
+EE.TiledMapLayer.prototype.enableCollision = function() {
+    if(!this.loaded) {
+        throw "Can't call enableCollision before the layer is loaded";
+    }
+    return;
 };
 
 EE.TiledMapLayer.prototype.render = function() {
