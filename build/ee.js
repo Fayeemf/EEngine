@@ -155,7 +155,6 @@ EE.EntityType = {
     ENTITY: 2,
     STATIC: 3,
     COLLIDABLE: 4,
-    COMPONENT: 5
 };
 EE.Game = function(canvas, obj) {
     this.clientWidth = canvas.width;
@@ -212,7 +211,11 @@ EE.Game.prototype._update = function() {
         if(ent_type == EE.EntityType.ENTITY || ent_type == EE.EntityType.RENDERABLE || ent_type == EE.EntityType.COLLIDABLE) {
             this._quadtree.insert(this._entities[i]);
         }
-        
+    }
+
+    // We have to make sure every entities are in the quadtree before updating them
+    for(var i = 0; i < this._entities.length; i++) {
+        var ent_type = this._entities[i].type;
         if(ent_type == EE.EntityType.UPDATABLE || ent_type == EE.EntityType.ENTITY) {
             this._entities[i].update(this._deltaTime);
         }
@@ -563,13 +566,13 @@ EE.Rect.prototype.top = function() {
 EE.Vector2 = function(x, y) {
     this.x = x;
     this.y = y;
-}
+};
 
 EE.Vector2.lerp = function(a, b, amt) {
     var nx = a.x+(b.x-a.x)*amt;
     var ny = a.y+(b.y-a.y)*amt;
     return {x:nx,  y:ny};
-}
+};
 EE.GraphicRenderer = function(game) {
     this.game = game;
     this.default_stroke_color = "black";
@@ -605,6 +608,7 @@ EE.Sprite = function(game, text_id, x, y, width, height, z_index) {
     this.game = game;
     this.text_id = text_id;
     this.bounds = new EE.Rect(x, y, width, height);
+    this.velocity = new EE.Vector2(0, 0);
     this._colliders = [];
     this.z_index = z_index || 0;
     this.visible = true;
@@ -615,7 +619,7 @@ EE.Sprite = function(game, text_id, x, y, width, height, z_index) {
 
 EE.Sprite.prototype.render = function() {
     for(var i = 0; i < this.components.length; i++) {
-        EE.Utils.tryCall(this, this.components[i].render);
+        EE.Utils.tryCall(this, this.components[i].component.render);
     }
     if(!this.visible) {
         return;
@@ -628,6 +632,16 @@ EE.Sprite.prototype.render = function() {
 };
 
 EE.Sprite.prototype.update = function(dt) {
+    var nextX = this.bounds.x + this.velocity.x;
+    var nextY = this.bounds.y + this.velocity.y;
+
+    if(this._checkCollision(nextX, nextY)) {
+        this.velocity.x = 0;
+        this.velocity.y = 0;
+    } else {
+        this.moveTo(nextX, nextY);
+    }
+    
     for(var i = 0; i < this._colliders.length; i++) {
         if(this.intersects(this._colliders[i].candidate)) {         
             if(!this._colliders[i].hit) {
@@ -639,15 +653,24 @@ EE.Sprite.prototype.update = function(dt) {
         }
     }
     for(var i = 0; i < this.components.length; i++) {
-        EE.Utils.tryCall(this, this.components[i].update);
+        EE.Utils.tryCall(this, this.components[i].component.update, dt);
     }
 };
 
-EE.Sprite.prototype.addComponent = function(component) {
+EE.Sprite.prototype.addComponent = function(name, component) {
+    if(typeof name !== "string") { throw "Name parameter must be a string"; }
+    if(typeof this.getComponent(name) !== "undefined") { throw "Duplicate component name : " + name; }
     instance = typeof component == "function" ? new (Function.prototype.bind.apply(component, arguments)) : component;
-    this.components.push(instance);
+    this.components.push({"name": name, "component" : instance});
     EE.Utils.tryCall(this, instance.init);
     return instance;
+};
+
+EE.Sprite.prototype.getComponent = function(name) {
+    var result = this.components.filter(function(item){
+        return item.name == name;
+    });
+    return result[0];
 };
 
 EE.Sprite.prototype.moveTo = function(x, y) {
@@ -699,6 +722,11 @@ EE.Sprite.prototype.contains = function(other) {
     return EE.MathUtils.contains(this.bounds, other.bounds);
 };
 
+EE.Sprite.prototype.setVelocity = function(x, y) {
+    this.velocity.x = x;
+    this.velocity.y = y;
+};
+
 EE.Sprite.prototype._checkCollision = function(nextX, nextY) {
     var bounds = {x: nextX, y: nextY, width: this.bounds.width, height: this.bounds.height};
     var _nearObjs = game.getEntitiesInBounds(bounds, this);
@@ -728,7 +756,7 @@ Object.defineProperty(EE.Sprite.prototype, "y", {
     },
     set: function(y) {
         if(isNaN(y)) {
-            throw "Can only assign a number to property x !";
+            throw "Can only assign a number to property y !";
         }
         this.bounds.y = y;
     }
@@ -749,11 +777,9 @@ EE.Cursor.prototype.init = function() {
 
 EE.Cursor.prototype._onMouseMove = function(event) {
     var rect = canvas.getBoundingClientRect();
-    this.x = event.clientX - rect.left,
-    this.y = event.clientY - rect.top
+    this.x = event.clientX - rect.left;
+    this.y = event.clientY - rect.top;
 };
-
-
 EE.KeyboardController = function(game) {
     this.game = game;
     this._keys = [];
@@ -1359,6 +1385,10 @@ EE.Utils = function() {};
 
 EE.Utils.tryCall = function(thisarg, callable) {
     if(typeof callable === "function") {
-        (callable.bind(thisarg))();
+        // Ignoring the two first arguments (this and callable)
+        var params = Array.prototype.slice.call(arguments);
+        params.shift();
+        params.shift();
+        callable.apply(thisarg, params);
     }
 };

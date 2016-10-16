@@ -10,7 +10,6 @@ EE.Cursor.prototype.init = function() {
 
 EE.Cursor.prototype._onMouseMove = function(event) {
     var rect = canvas.getBoundingClientRect();
-    this.x = event.clientX - rect.left,
-    this.y = event.clientY - rect.top
+    this.x = event.clientX - rect.left;
+    this.y = event.clientY - rect.top;
 };
-

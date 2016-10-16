@@ -53,7 +53,11 @@ EE.Game.prototype._update = function() {
         if(ent_type == EE.EntityType.ENTITY || ent_type == EE.EntityType.RENDERABLE || ent_type == EE.EntityType.COLLIDABLE) {
             this._quadtree.insert(this._entities[i]);
         }
-        
+    }
+
+    // We have to make sure every entities are in the quadtree before updating them
+    for(var i = 0; i < this._entities.length; i++) {
+        var ent_type = this._entities[i].type;
         if(ent_type == EE.EntityType.UPDATABLE || ent_type == EE.EntityType.ENTITY) {
             this._entities[i].update(this._deltaTime);
         }
