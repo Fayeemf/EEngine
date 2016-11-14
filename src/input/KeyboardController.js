@@ -2,8 +2,10 @@ EE.KeyboardController = function (game) {
   this.game = game;
   this._keys = [];
 
-  game.getRendererSurface().addEventListener("keydown", this._onKeyDown.bind(this));
-  game.getRendererSurface().addEventListener("keyup", this._onKeyUp.bind(this));
+  if(!this.game._is_node_context) {
+    window.addEventListener("keydown", this._onKeyDown.bind(this));
+    window.addEventListener("keyup", this._onKeyUp.bind(this));
+  }
 };
 
 EE.KeyboardController.prototype._onKeyDown = function (event) {
