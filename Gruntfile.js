@@ -16,8 +16,7 @@ module.exports = function(grunt) {
           "src/core/EntityType.js",
           "src/core/Loader.js",
           "src/core/Quadtree.js",
-          "src/core/Game.js",
-          "src/core/GameHost.js"
+          "src/core/Game.js"
         ],
         dest: 'build/ee.js'
       }

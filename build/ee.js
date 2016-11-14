@@ -1472,7 +1472,3 @@ EE.Game.prototype.getCursor = function () {
 EE.Game.prototype.isDown = function (keyCode) {
   return this._keyboardController.pressed(keyCode);
 };
-EE.GameHost = function(gameWidth, gameHeight) {
-  this._construct(new EE.NullRenderSurface(1280, 1200), {});
-};
-
