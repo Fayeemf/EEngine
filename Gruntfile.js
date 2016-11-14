@@ -26,13 +26,12 @@ module.exports = function(grunt) {
       scripts: {
         files: 'src/**/*.js',
         tasks: ['concat:dist']
-      },
+      }
     }
   });
 
   grunt.loadNpmTasks('grunt-contrib-concat');
-  grunt.loadNpmTasks('grunt-contrib-watch')
-
+  grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.registerTask('default', ['watch:dist']);
 
 };

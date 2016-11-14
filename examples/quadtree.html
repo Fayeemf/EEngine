@@ -16,31 +16,30 @@ var game = new EE.Game(new EE.CanvasRenderSurface(document.getElementById("canva
         var cellWidth = Math.round(this.worldWidth / gridCount);
         var cellHeight = Math.round(this.worldHeight / gridCount);
 
-        this.addTimer(1000, () => {
+        this.addTimer(1000, function() {
             var x = Math.round(Math.random() * gridCount) * cellWidth;
             var y = Math.round(Math.random() * gridCount) * cellHeight;
             var b = this.addBox(x, y, cellWidth, cellHeight, "black");
-        }, true, 1000).start();
-    }
+        }.bind(this), true, 1000).start();
+    };
 
     this.update = function() {
-        var entities = this.getEntities(EE.Box);
         for(var i = 0; i < this._entities.length; i++) {
             if (this._entities[i] instanceof EE.Box) {
                 this._entities[i].setColor("black");
             }
         }
 
-        var newPos = this.getCamera().toWorldPoint({x: this.cursor.x, y: this.cursor.y});
+        var newPos = this.getCamera().toWorldPoint({x: this.getCursor().x, y: this.getCursor().y});
         var bounds = {x: newPos.x, y: newPos.y, width:1, height:1};
         
         var entities = this.getEntitiesInBounds(bounds);
-        for(var i = 0; i < entities.length; i++) {
-            if (entities[i] instanceof EE.Box) {
-                entities[i].setColor("red");
+        for(var j = 0; j < entities.length; j++) {
+            if (entities[j] instanceof EE.Box) {
+                entities[j].setColor("red");
             }
         }
-    }
+    };
 
     this.render = function() {
         this._quadtree.renderDebug();

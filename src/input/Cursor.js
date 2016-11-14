@@ -1,15 +1,12 @@
-EE.Cursor = function(game) {
-    this.game = game;
-    this.x = 0;
-    this.y = 0;
-};
-
-EE.Cursor.prototype.init = function() {
-    this.game._renderSurface.addEventListener("mousemove", this._onMouseMove.bind(this));
+EE.Cursor = function(canvas) {
+  this._canvas = canvas;
+  this.x = 0;
+  this.y = 0;
+  this._canvas.addEventListener("mousemove", this._onMouseMove.bind(this));
 };
 
 EE.Cursor.prototype._onMouseMove = function(event) {
-    var rect = canvas.getBoundingClientRect();
-    this.x = event.clientX - rect.left;
-    this.y = event.clientY - rect.top;
+  var rect = this._canvas.getBoundingClientRect();
+  this.x = event.clientX - rect.left;
+  this.y = event.clientY - rect.top;
 };

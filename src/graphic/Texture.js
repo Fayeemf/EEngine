@@ -1,4 +1,4 @@
-EE.Texture = function(id, src) {
-    this.id = id;
-    this.src = src;
+EE.Texture = function (id, src) {
+  this.id = id;
+  this.src = src;
 };
