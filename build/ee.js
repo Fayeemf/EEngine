@@ -858,7 +858,7 @@ EE.Sprite.prototype.setVelocity = function (x, y) {
 
 EE.Sprite.prototype._checkCollision = function (nextX, nextY) {
   var bounds = {x: nextX, y: nextY, width: this.bounds.width, height: this.bounds.height};
-  var _nearObjs = game.getEntitiesInBounds(bounds, this);
+  var _nearObjs = this.game.getEntitiesInBounds(bounds, this);
   for (var i = 0; i < _nearObjs.length; i++) {
     if (EE.MathUtils.intersects(_nearObjs[i].bounds, bounds)) {
       return true;
