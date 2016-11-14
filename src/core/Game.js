@@ -1,27 +1,31 @@
-EE.Game = function(canvas, obj) {
-    this.clientWidth = canvas.width;
-    this.clientHeight = canvas.height;
-    this.worldWidth = obj.worldWidth || this.clientWidth;
-    this.worldHeight = obj.worldHeight || this.clientHeight;
-    this.debug = false;
-    this.cursor = new EE.Cursor(this);
+EE.Game = function(renderSurface, obj) {
+    this._construct(renderSurface, obj);
+};
 
-    this._loader = new EE.Loader();
-    this._canvas = canvas;
-    this._context = this._canvas.getContext("2d");
-    this._scene = typeof obj == "function" ? new obj() : obj; 
-    this._click_listeners = [];
-    this._entities = [];
-    this._quadtree = new EE.Quadtree(this, 0, new EE.Rect(0, 0, this.worldWidth, this.worldHeight));
-    this._camera = new EE.Camera(this, 0, 0, 1);
-    this._renderer = new EE.GraphicRenderer(this);
-    this._keyboardController = new EE.KeyboardController(this);
-    this._lastFrameUpdate = new Date();
-    this._deltaTime = 0;
+EE.Game.prototype._construct = function(renderSurface, obj) {
+  this.clientWidth = renderSurface.getSurfaceWidth();
+  this.clientHeight = renderSurface.getSurfaceHeight();
+  this.worldWidth = obj.worldWidth || this.clientWidth;
+  this.worldHeight = obj.worldHeight || this.clientHeight;
+  this.debug = false;
+  this.cursor = new EE.Cursor(this);
+
+  this._loader = new EE.Loader();
+  this._renderSurface = renderSurface;
+  this._context = this._renderSurface.getDrawingContext();
+  this._scene = typeof obj == "function" ? new obj() : obj;
+  this._click_listeners = [];
+  this._entities = [];
+  this._quadtree = new EE.Quadtree(this, 0, new EE.Rect(0, 0, this.worldWidth, this.worldHeight));
+  this._camera = new EE.Camera(this, 0, 0, 1);
+  this._renderer = new EE.GraphicRenderer(this);
+  this._keyboardController = new EE.KeyboardController(this);
+  this._lastFrameUpdate = new Date();
+  this._deltaTime = 0;
 };
 
 EE.Game.prototype._init = function() {
-    this._canvas.addEventListener("mousedown", this._onClick.bind(this));
+    this._renderSurface.addEventListener("mousedown", this._onClick.bind(this));
     this.cursor.init();
     this.addEntity(this._camera);
     EE.Utils.tryCall(this, this._scene.init);
@@ -67,8 +71,7 @@ EE.Game.prototype._update = function() {
 
 
 EE.Game.prototype._render = function() {
-    this._context.clearRect(0, 0, this._canvas.width, this._canvas.height);
-    this._context.beginPath();
+    this._renderSurface.beginDraw();
 
     EE.Utils.tryCall(this, this._scene.prerender);
 
@@ -84,7 +87,7 @@ EE.Game.prototype._render = function() {
     }
     EE.Utils.tryCall(this, this._scene.render);
     EE.Utils.tryCall(this, this._scene.postrender);
-    this._context.closePath();
+    this._renderSurface.endDraw();
 };
 
 EE.Game.prototype._loop = function() {
@@ -157,7 +160,7 @@ EE.Game.prototype.addTimer = function(delay, callback, repeat, interval) {
 };
 
 EE.Game.prototype.setBackground = function(color) {
-    this._canvas.style.backgroundColor = color;
+    this._renderSurface.setBackgroundColor(color);
 };
 
 EE.Game.prototype.click = function(callback) {

@@ -5,7 +5,7 @@ EE.Cursor = function(game) {
 };
 
 EE.Cursor.prototype.init = function() {
-    this.game._canvas.addEventListener("mousemove", this._onMouseMove.bind(this));
+    this.game._renderSurface.addEventListener("mousemove", this._onMouseMove.bind(this));
 };
 
 EE.Cursor.prototype._onMouseMove = function(event) {
