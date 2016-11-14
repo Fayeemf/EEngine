@@ -2,7 +2,7 @@
   "name": "eengine",
   "version": "1.0.0",
   "description": "A simple game engine for prototyping",
-  "main": "index.js",
+  "main": "build/ee.js",
   "directories": {
     "example": "examples"
   },
