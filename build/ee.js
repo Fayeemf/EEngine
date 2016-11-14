@@ -385,8 +385,8 @@ EE.KeyboardController = function (game) {
   this.game = game;
   this._keys = [];
 
-  window.addEventListener("keydown", this._onKeyDown.bind(this));
-  window.addEventListener("keyup", this._onKeyUp.bind(this));
+  game.getRendererSurface().addEventListener("keydown", this._onKeyDown.bind(this));
+  game.getRendererSurface().addEventListener("keyup", this._onKeyUp.bind(this));
 };
 
 EE.KeyboardController.prototype._onKeyDown = function (event) {
