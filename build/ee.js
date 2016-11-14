@@ -1289,6 +1289,7 @@ EE.Game.prototype._construct = function (renderSurface, obj) {
   this._keyboardController = new EE.KeyboardController(this);
   this._lastFrameUpdate = new Date();
   this._deltaTime = 0;
+  this._is_node_context = typeof window === "undefined";
 };
 
 EE.Game.prototype._init = function () {
@@ -1358,8 +1359,12 @@ EE.Game.prototype._render = function () {
 
 EE.Game.prototype._loop = function () {
   this._update();
-  this._render();
-  window.requestAnimationFrame(this._loop.bind(this));
+  if(!this._is_node_context) {
+    this._render();
+    window.requestAnimationFrame(this._loop.bind(this));
+  } else {
+    setTimeout(this._loop.bind(this), 10)
+  }
 };
 
 EE.Game.prototype._orderEntitiesZIndex = function () {
