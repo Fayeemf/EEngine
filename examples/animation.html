@@ -1,52 +1,59 @@
 <html>
-    <head>
-        <title>Animation</title>
-    </head>
-    <body>
-        <canvas id="canvas" width="600" height="600"></canvas>
-    </body> 
+<head>
+    <title>Animation</title>
+</head>
+<body>
+<canvas id="canvas" width="600" height="600"></canvas>
+</body>
 </html>
 <script src="../build/ee.js"></script>
 <script>
 
-var game = new EE.Game(document.getElementById("canvas"), {init: init, update: update, render: render});
-var spr;
+    var canvas = document.getElementById("canvas");
+    var game = new EE.Game(new EE.CanvasRenderSurface(canvas), {init: init, update: update, render: render});
+    var spr;
 
-function init() {
-    game.loadTexture("bunny", "res/bunny.png");
-    game.setBackground("lightGray");
-    
-    spr = game.addSprite("bunny", game.clientWidth / 2 - 35, game.clientHeight / 2 - 35, 70, 70);
-    var animator = new EE.Animator(game, spr, null, 10);
-    spr.click(() => {
-        console.log("clicked");
-        animator.lerpTo({x: 0, y:0}, () => {
-            console.log("first lerp done");
-            animator.addPath([
-                {to: {x: 100, y: 60}, callback: () => {
-                    animator.pause(2000, () => {
-                        console.log("resuming animation !");
-                    });
-                    console.log("pausing for 2 seconds...")
-                }},
-                {to: {x: 100, y: 200}, callback: () => {
-                    animator.pause(1000);
-                }},
-                {to:{x: 10, y: -10}},
-                {to:{x: 0, y: 0}, callback: () => {
-                    console.log("yay :)");
-                }}]);
-        });
-    });
-}
+    function init() {
+        game.loadTexture("bunny", "res/bunny.png");
+        game.setBackground("lightGray");
 
-function render() {
+        spr = game.addSprite("bunny", game.clientWidth / 2 - 35, game.clientHeight / 2 - 35, 70, 70);
+        var animator = new EE.Animator(game, spr, null, 10);
+        spr.click(function () {
+            console.log("clicked");
+            animator.lerpTo({x: 0, y: 0}, function () {
+                console.log("first lerp done");
+                animator.addPath([
+                    {
+                        to: {x: 100, y: 60}, callback: function () {
+                        animator.pause(2000, function () {
+                            console.log("resuming animation !");
+                        }.bind(this));
+                        console.log("pausing for 2 seconds...")
+                    }.bind(this)
+                    },
+                    {
+                        to: {x: 100, y: 200}, callback: function () {
+                        animator.pause(1000);
+                    }.bind(this)
+                    },
+                    {to: {x: 10, y: -10}},
+                    {
+                        to: {x: 0, y: 0}, callback: function () {
+                        console.log("yay :)");
+                    }.bind(this)
+                    }]);
+            }.bind(this));
+        }.bind(this));
+    }
 
-}
+    function render() {
 
-function update() {
+    }
 
-}
+    function update() {
 
-game.run();
+    }
+
+    game.run();
 </script>

@@ -1,72 +1,69 @@
 <html>
-    <head>
-        <title>Map</title>
-    </head>
-    <body>
-        <canvas id="canvas" width="1280" height="1024"></canvas>
-    </body> 
+<head>
+    <title>Map</title>
+</head>
+<body>
+<canvas id="canvas" width="1280" height="1024"></canvas>
+</body>
 </html>
 <script src="../build/ee.js"></script>
 <script>
-
-var game = new EE.Game(document.getElementById("canvas"), {init: init, update: update, prerender: prerender, render:render});
-var spr;
-var map;
-var bg_layer, top_layer, collision_layer;
-
-function init() {
-    game.loadTexture("bunny", "res/bunny.png");
-    spr = game.addSprite("bunny", 200, 300, 60, 60);
-
-    map = new EE.TiledMap(game, "res/map_bg.tmx", 3);
-    map.onLoad(() => {
-        var transformed = game.getCamera().toScreen(map.bounds);
-        var animator = new EE.Animator(game, game.getCamera(), null, 1);
-        game.getCamera().setBoundsLimit(map.bounds);
-        game.getCamera().follow(spr);
-        
-        bg_layer = map.getLayer("backgroundLayer");
-        top_layer = map.getLayer("objectsLayer");
-        col_layer = map.getLayer("collisionLayer");
-        col_layer.enableCollision();
-
-        var bunny_animator = new EE.Animator(game, spr);
-        game.click(function(event) {
-            var pos = game.getCamera().toWorldPoint({x: event.x - spr.bounds.width/2, y: event.y - spr.bounds.height/2});
-            bunny_animator.lerpTo(pos);
-        });
+    var canvas = document.getElementById("canvas");
+    var game = new EE.Game(new EE.CanvasRenderSurface(canvas), {
+        init: init,
+        update: update,
+        prerender: prerender,
+        render: render
     });
-    
-    map.init();
-}
+    var spr;
+    var map;
+    var bg_layer, top_layer;
 
-// Since the map is the first element that needs to be renderer, 
-// we render it before the main render call
-function prerender() {
-    bg_layer.render();
-    top_layer.render();
-}
+    function init() {
+        game.loadTexture("bunny", "res/bunny.png");
+        spr = game.addSprite("bunny", 200, 300, 60, 60);
 
-function render() {
-    
-}
+        map = new EE.TiledMap(game, "res/map_bg.tmx", 3);
+        map.onLoad(function () {
+            game.getCamera().setBoundsLimit(map.bounds);
+            game.getCamera().follow(spr);
 
-var speed = 5;
+            bg_layer = map.getLayer("backgroundLayer");
+            top_layer = map.getLayer("objectsLayer");
+            var col_layer = map.getLayer("collisionLayer");
+            col_layer.enableCollision();
+        }.bind(this));
 
-function update() {
-    if(game.isDown(EE.Keys.UP)) {
-        spr.moveOffset(0, -speed);
+        map.init();
     }
-    if(game.isDown(EE.Keys.DOWN)) {
-        spr.moveOffset(0, speed);
-    }
-    if(game.isDown(EE.Keys.LEFT)) {
-        spr.moveOffset(-speed, 0);
-    }
-    if(game.isDown(EE.Keys.RIGHT)) {
-        spr.moveOffset(speed, 0);
-    }
-}
 
-game.run();
+    // Since the map is the first element that needs to be renderer,
+    // we render it before the main render call
+    function prerender() {
+        bg_layer.render();
+        top_layer.render();
+    }
+
+    function render() {
+
+    }
+
+    var speed = 5;
+
+    function update() {
+        if (game.isDown(EE.Keys.UP)) {
+            spr.moveOffset(0, -speed);
+        }
+        if (game.isDown(EE.Keys.DOWN)) {
+            spr.moveOffset(0, speed);
+        }
+        if (game.isDown(EE.Keys.LEFT)) {
+            spr.moveOffset(-speed, 0);
+        }
+        if (game.isDown(EE.Keys.RIGHT)) {
+            spr.moveOffset(speed, 0);
+        }
+    }
+
+    game.run();
 </script>
