@@ -946,6 +946,10 @@ EE.Animator.prototype._init = function () {
   this.game.addEntity(this);
 };
 
+/**
+ *
+ * @param dt {Number} - Delta time
+ */
 EE.Animator.prototype.update = function (dt) {
   if (this._followPath.length !== 0 && !this._paused) {
     var path = this._followPath[0];
@@ -962,27 +966,50 @@ EE.Animator.prototype.update = function (dt) {
   }
 };
 
+/**
+ * Sets the speed of the current animator
+ * @param speed {Number}
+ */
 EE.Animator.prototype.setSpeed = function (speed) {
   if (!isNaN(speed) && speed >= 0) {
     this.speed = speed;
   }
 };
 
+/**
+ * Add a path to follow
+ * The {path} obj should contains a `to` attribute and an optional `callback` attribute
+ * @param path
+ */
 EE.Animator.prototype.addPath = function (path) {
   this._followPath = this._followPath.concat(path);
 };
 
+/**
+ * Set the path of the animator to a new path
+ * @param path {Object} The new path
+ */
 EE.Animator.prototype.setPath = function (path) {
   this._followPath = path;
 };
 
+/**
+ * Linear interpolation to a new position
+ * @param newPos {Object} Position to lerp to (x,y)
+ * @param callback {Function} Function that will be called at the end of the interpolation
+ */
 EE.Animator.prototype.lerpTo = function (newPos, callback) {
   this._followPath = [{to: newPos, callback: callback}];
 };
 
+/**
+ * Pauses the current animation for a specified amount of time
+ * @param timeoutMilli
+ * @param callback
+ */
 EE.Animator.prototype.pause = function (timeoutMilli, callback) {
   this._paused = true;
-  if (!isNaN(timeoutMilli)) {
+  if (!isNaN(timeoutMilli) && typeof timeoutMilli !== "undefined") {
     new EE.Timer(this.game, timeoutMilli, function () {
       if (typeof callback == "function") {
         callback();
@@ -1032,15 +1059,26 @@ EE.Camera.prototype.update = function (dt) {
   }
 };
 
+/**
+ * Sets the limit of the camera
+ * @param bounds {Object} Object containing x,y,width,height
+ */
 EE.Camera.prototype.setBoundsLimit = function (bounds) {
   this._limit = bounds;
 };
 
-
+/**
+ * Follows a specified object
+ * @param obj {Object} Must have x,y,width,height
+ */
 EE.Camera.prototype.follow = function (obj) {
   this.followed = obj;
 };
 
+/**
+ * Sets a new scale
+ * @param scale {Number} Number between 0 and 1
+ */
 EE.Camera.prototype.setScale = function (scale) {
   if (scale > 1) scale = 1;
   if (scale < 0) scale = 0;
@@ -1049,11 +1087,20 @@ EE.Camera.prototype.setScale = function (scale) {
   this.bounds.height = this.game.clientHeight * this.scale;
 };
 
+/**
+ * Moves the camera by a specified offset
+ * @param offset {Object}
+ */
 EE.Camera.prototype.moveOffset = function (offset) {
   this.bounds.x += offset.x;
   this.bounds.y += offset.y;
 };
 
+/**
+ * Moves the camera
+ * @param x
+ * @param y
+ */
 EE.Camera.prototype.moveTo = function (x, y) {
   this.bounds.x = x;
   this.bounds.y = y;
@@ -1301,16 +1348,30 @@ EE.Game.prototype._init = function () {
   this._loader.init();
 };
 
+/**
+ * Add a listener that will be called whenever a click event occur on the rendering surface
+ * @param callback
+ * @private
+ */
 EE.Game.prototype._addClickListener = function (callback) {
   this._click_listeners.push(callback);
 };
 
+/**
+ * Calls every click event binded on the game
+ * @param event {Object}
+ * @private
+ */
 EE.Game.prototype._onClick = function (event) {
   for (var i = 0; i < this._click_listeners.length; i++) {
     (this._click_listeners[i].bind(this))(event);
   }
 };
 
+/**
+ * Insert entities in the quadtree then update them, calls the scene's update method
+ * @private
+ */
 EE.Game.prototype._update = function () {
   var now = new Date();
   this._deltaTime = (now - this._lastFrameUpdate) / 1000;
@@ -1320,10 +1381,10 @@ EE.Game.prototype._update = function () {
   this._quadtree.clear();
   for (var i = 0; i < this._entities.length; i++) {
     var ent_type = this._entities[i].type;
-    if (typeof ent_type == "undefined" || ent_type == EE.EntityType.STATIC) {
+    if (typeof ent_type === "undefined" || ent_type === EE.EntityType.STATIC) {
       continue;
     }
-    if (ent_type == EE.EntityType.ENTITY || ent_type == EE.EntityType.RENDERABLE || ent_type == EE.EntityType.COLLIDABLE) {
+    if (ent_type === EE.EntityType.ENTITY || ent_type === EE.EntityType.RENDERABLE || ent_type === EE.EntityType.COLLIDABLE) {
       this._quadtree.insert(this._entities[i]);
     }
   }
@@ -1331,14 +1392,17 @@ EE.Game.prototype._update = function () {
   // We have to make sure every entities are in the quadtree before updating them
   for (var i = 0; i < this._entities.length; i++) {
     var ent_type = this._entities[i].type;
-    if (ent_type == EE.EntityType.UPDATABLE || ent_type == EE.EntityType.ENTITY) {
+    if (ent_type === EE.EntityType.UPDATABLE || ent_type === EE.EntityType.ENTITY) {
       this._entities[i].update(this._deltaTime);
     }
   }
   EE.Utils.tryCall(this, this._scene.update);
 };
 
-
+/**
+ * Render entities and call the scene's prerender and render
+ * @private
+ */
 EE.Game.prototype._render = function () {
   this._renderSurface.beginDraw();
 
@@ -1348,7 +1412,7 @@ EE.Game.prototype._render = function () {
   for (var i = 0; i < entities.length; i++) {
     var ent_type = entities[i].type;
 
-    if (typeof ent_type == "undefined" || ent_type == EE.EntityType.COLLIDABLE) {
+    if (typeof ent_type === "undefined" || ent_type === EE.EntityType.COLLIDABLE) {
       continue;
     }
 
@@ -1359,6 +1423,10 @@ EE.Game.prototype._render = function () {
   this._renderSurface.endDraw();
 };
 
+/**
+ * Main loop for the game, calls update and calls render if it's not in a node context
+ * @private
+ */
 EE.Game.prototype._loop = function () {
   this._update();
   if(!this._is_node_context) {
@@ -1369,6 +1437,10 @@ EE.Game.prototype._loop = function () {
   }
 };
 
+/**
+ * Order every entities according to their z_index
+ * @private
+ */
 EE.Game.prototype._orderEntitiesZIndex = function () {
   this._entities.sort(function (a, b) {
     if (a.z_index < b.z_index) {
@@ -1381,6 +1453,9 @@ EE.Game.prototype._orderEntitiesZIndex = function () {
   });
 };
 
+/**
+ * Initialize the game and load assets
+ */
 EE.Game.prototype.run = function () {
   this._init();
   // Wait until all assets are loaded before starting the loop
@@ -1389,12 +1464,22 @@ EE.Game.prototype.run = function () {
   }.bind(this));
 };
 
+/**
+ * Adds a texture to be loader by the game's loader
+ * @param id {String} Unique identifier for the texture
+ * @param src {String}
+ */
 EE.Game.prototype.loadTexture = function (id, src) {
   this._loader.preloadTexture(id, src);
 };
 
+/**
+ * Adds an entity to the game
+ * @param entity {Object} - Must contain a `type` field (EE.EntityType)
+ * @returns {*} The added entity
+ */
 EE.Game.prototype.addEntity = function (entity) {
-  if (typeof entity.type == "undefined") {
+  if (typeof entity.type === "undefined") {
     console.log(entity);
     throw "Can't add an entity without a 'type' attribute defined";
   }
@@ -1402,6 +1487,11 @@ EE.Game.prototype.addEntity = function (entity) {
   return entity;
 };
 
+/**
+ * Add multiple entities at once
+ * @param entities {Array.<T>} - An array of entities objects
+ * @returns {*}
+ */
 EE.Game.prototype.addEntities = function (entities) {
   Array.prototype.forEach.call(entities, function (entity) {
     this.addEntity(entity);
@@ -1409,6 +1499,10 @@ EE.Game.prototype.addEntities = function (entities) {
   return entities;
 };
 
+/**
+ * Remove an entity from the game
+ * @param entity {Object}
+ */
 EE.Game.prototype.removeEntity = function (entity) {
   var i = this._entities.indexOf(entity);
   if (i !== -1) {
@@ -1416,6 +1510,16 @@ EE.Game.prototype.removeEntity = function (entity) {
   }
 };
 
+/**
+ * Add a Sprite to the game
+ * @param text_id {String} - The texture id to be used for the sprite, must be loaded first
+ * @param x {Number} - Initial X position for the sprite
+ * @param y {Number} - Initial Y position for the sprite
+ * @param width {Number} - Width of the sprite
+ * @param height {Number} - Width of the sprite
+ * @param z_index
+ * @returns {EE.Sprite}
+ */
 EE.Game.prototype.addSprite = function (text_id, x, y, width, height, z_index) {
   var _spr = new EE.Sprite(this, text_id, x, y, width, height, z_index);
   this._entities.push(_spr);
@@ -1423,23 +1527,53 @@ EE.Game.prototype.addSprite = function (text_id, x, y, width, height, z_index) {
   return _spr;
 };
 
+/**
+ * Add a simple Box to be rendered
+ * @param x
+ * @param y
+ * @param width
+ * @param height
+ * @param color
+ * @returns {*}
+ */
 EE.Game.prototype.addBox = function (x, y, width, height, color) {
   var box = new EE.Box(this, new EE.Rect(x, y, width, height), color);
   return this.addEntity(box);
 };
 
+/**
+ * Add a timer
+ * @param delay {Number} - Time before the callback is called
+ * @param callback {Function} - Callback function
+ * @param repeat {Boolean} - Whether the timer should be repeated
+ * @param interval {Number} - Time before the callback is called between each repeat
+ * @returns {EE.Timer}
+ */
 EE.Game.prototype.addTimer = function (delay, callback, repeat, interval) {
   return new EE.Timer(this, delay, callback, repeat, interval);
 };
 
+/**
+ * Sets the background color of the rendering surface
+ * @param color {String} - Color
+ */
 EE.Game.prototype.setBackground = function (color) {
   this._renderSurface.setBackgroundColor(color);
 };
 
+/**
+ * Add a click listener
+ * @param callback
+ */
 EE.Game.prototype.click = function (callback) {
   this._addClickListener(callback);
 };
 
+/**
+ * Gets all entities currently in the game
+ * @param filterType {Object} - Optional, If set it will only return entities of the said type
+ * @returns {*}
+ */
 EE.Game.prototype.getEntities = function (filterType) {
   if (typeof filterType != "undefined") {
     return this._entities.filter(function (elem) {
@@ -1449,25 +1583,43 @@ EE.Game.prototype.getEntities = function (filterType) {
   return this._entities;
 };
 
+/**
+ * Returns the texture associated to a texture id
+ * @param text_id {String}
+ */
 EE.Game.prototype.getTexture = function (text_id) {
   return this._loader.getTexture(text_id);
 };
 
+/**
+ * Get entities currently in the specified bounds
+ * @param bounds {Object} - An object containing a x,y,width and height property
+ * @param except {Object} - If set, this object will not be returned from the list
+ * @returns {Array.<T>|*}
+ */
 EE.Game.prototype.getEntitiesInBounds = function (bounds, except) {
   var list = this._quadtree.retrieve(bounds);
 
   if (typeof except !== "undefined") {
     return list.filter(function (item) {
-      return item != except;
+      return item !== except;
     });
   }
   return list;
 };
 
+/**
+ * Gets the camera of the game
+ * @returns {EE.Camera}
+ */
 EE.Game.prototype.getCamera = function () {
   return this._camera;
 };
 
+/**
+ *
+ * @returns {*} The current rendering surface of the game
+ */
 EE.Game.prototype.getRendererSurface = function () {
   return this._renderSurface;
 };
@@ -1476,6 +1628,10 @@ EE.Game.prototype.getCursor = function () {
   return this._renderSurface.getCursor();
 };
 
+/**
+ * Return True if the key is currently down
+ * @param keyCode {EE.Keys}
+ */
 EE.Game.prototype.isDown = function (keyCode) {
   return this._keyboardController.pressed(keyCode);
 };

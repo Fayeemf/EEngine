@@ -31,15 +31,26 @@ EE.Camera.prototype.update = function (dt) {
   }
 };
 
+/**
+ * Sets the limit of the camera
+ * @param bounds {Object} Object containing x,y,width,height
+ */
 EE.Camera.prototype.setBoundsLimit = function (bounds) {
   this._limit = bounds;
 };
 
-
+/**
+ * Follows a specified object
+ * @param obj {Object} Must have x,y,width,height
+ */
 EE.Camera.prototype.follow = function (obj) {
   this.followed = obj;
 };
 
+/**
+ * Sets a new scale
+ * @param scale {Number} Number between 0 and 1
+ */
 EE.Camera.prototype.setScale = function (scale) {
   if (scale > 1) scale = 1;
   if (scale < 0) scale = 0;
@@ -48,11 +59,20 @@ EE.Camera.prototype.setScale = function (scale) {
   this.bounds.height = this.game.clientHeight * this.scale;
 };
 
+/**
+ * Moves the camera by a specified offset
+ * @param offset {Object}
+ */
 EE.Camera.prototype.moveOffset = function (offset) {
   this.bounds.x += offset.x;
   this.bounds.y += offset.y;
 };
 
+/**
+ * Moves the camera
+ * @param x
+ * @param y
+ */
 EE.Camera.prototype.moveTo = function (x, y) {
   this.bounds.x = x;
   this.bounds.y = y;

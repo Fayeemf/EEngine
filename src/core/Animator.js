@@ -16,6 +16,10 @@ EE.Animator.prototype._init = function () {
   this.game.addEntity(this);
 };
 
+/**
+ *
+ * @param dt {Number} - Delta time
+ */
 EE.Animator.prototype.update = function (dt) {
   if (this._followPath.length !== 0 && !this._paused) {
     var path = this._followPath[0];
@@ -32,27 +36,50 @@ EE.Animator.prototype.update = function (dt) {
   }
 };
 
+/**
+ * Sets the speed of the current animator
+ * @param speed {Number}
+ */
 EE.Animator.prototype.setSpeed = function (speed) {
   if (!isNaN(speed) && speed >= 0) {
     this.speed = speed;
   }
 };
 
+/**
+ * Add a path to follow
+ * The {path} obj should contains a `to` attribute and an optional `callback` attribute
+ * @param path
+ */
 EE.Animator.prototype.addPath = function (path) {
   this._followPath = this._followPath.concat(path);
 };
 
+/**
+ * Set the path of the animator to a new path
+ * @param path {Object} The new path
+ */
 EE.Animator.prototype.setPath = function (path) {
   this._followPath = path;
 };
 
+/**
+ * Linear interpolation to a new position
+ * @param newPos {Object} Position to lerp to (x,y)
+ * @param callback {Function} Function that will be called at the end of the interpolation
+ */
 EE.Animator.prototype.lerpTo = function (newPos, callback) {
   this._followPath = [{to: newPos, callback: callback}];
 };
 
+/**
+ * Pauses the current animation for a specified amount of time
+ * @param timeoutMilli
+ * @param callback
+ */
 EE.Animator.prototype.pause = function (timeoutMilli, callback) {
   this._paused = true;
-  if (!isNaN(timeoutMilli)) {
+  if (!isNaN(timeoutMilli) && typeof timeoutMilli !== "undefined") {
     new EE.Timer(this.game, timeoutMilli, function () {
       if (typeof callback == "function") {
         callback();
