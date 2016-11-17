@@ -16,10 +16,10 @@ EE.Game.prototype._construct = function (renderSurface, obj) {
   this._entities = [];
   this._quadtree = new EE.Quadtree(this, 0, new EE.Rect(0, 0, this.worldWidth, this.worldHeight));
   this._camera = new EE.Camera(this, 0, 0, 1);
+  this._is_node_context = typeof window === "undefined";
   this._keyboardController = new EE.KeyboardController(this);
   this._lastFrameUpdate = new Date();
   this._deltaTime = 0;
-  this._is_node_context = typeof window === "undefined";
 };
 
 EE.Game.prototype._init = function () {

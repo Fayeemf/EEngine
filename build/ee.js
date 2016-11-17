@@ -1106,10 +1106,20 @@ EE.Camera.prototype.moveTo = function (x, y) {
   this.bounds.y = y;
 };
 
+/**
+ * Transforms a source Rect to screen Rect
+ * @param source
+ * @returns {EE.Rect}
+ */
 EE.Camera.prototype.toScreen = function (source) {
   return new EE.Rect((source.x - this.bounds.x) / this.scale, (source.y - this.bounds.y) / this.scale, source.width / this.scale, source.height / this.scale);
 };
 
+/**
+ * Transforms a source Rect to world Rect
+ * @param source
+ * @returns {EE.Rect}
+ */
 EE.Camera.prototype.toWorld = function (source) {
   return new EE.Rect((source.x * this.scale) + this.bounds.x, (source.y * this.scale) + this.bounds.y, source.width * this.scale, source.height * this.scale);
 };
@@ -1322,6 +1332,7 @@ EE.Game = function (renderSurface, obj) {
 };
 
 EE.Game.prototype._construct = function (renderSurface, obj) {
+  this._is_node_context = typeof window === "undefined";
   this.clientWidth = renderSurface.getSurfaceWidth();
   this.clientHeight = renderSurface.getSurfaceHeight();
   this.worldWidth = obj.worldWidth || this.clientWidth;
@@ -1338,7 +1349,6 @@ EE.Game.prototype._construct = function (renderSurface, obj) {
   this._keyboardController = new EE.KeyboardController(this);
   this._lastFrameUpdate = new Date();
   this._deltaTime = 0;
-  this._is_node_context = typeof window === "undefined";
 };
 
 EE.Game.prototype._init = function () {
